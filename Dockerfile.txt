@@ -1,0 +1,263 @@
+# syntax=docker/dockerfile:1.7
+
+# Multi-arch support: Automatically provided by buildx
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+ARG TARGETARCH
+
+ARG BUILD_DATE
+ARG GIT_COMMIT=unknown
+ARG NGINX_VERSION=1.26.2
+ARG NODE_VERSION=20
+ARG ALPINE_VERSION=3.20
+
+# ==============================================================================
+# Stage 1: Application Build
+# ==============================================================================
+FROM node:${NODE_VERSION}-alpine@sha256:2d5e8a8a51bc341fd5f2eed6d91455c3a3d147e91a14298fc564b5dc519c1666 AS builder
+
+WORKDIR /app
+
+# Setup pnpm with corepack
+ENV PNPM_HOME="/pnpm" \
+    PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@9.12.2 --activate
+
+# Install dependencies with cache mount
+COPY package.json pnpm-lock.yaml .npmrc ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --prefer-offline
+
+# Copy source and build configuration
+COPY tsconfig.json tsconfig.node.json vite.config.ts ./
+COPY postcss.config.js tailwind.config.ts biome.json ./
+COPY index.html ./
+COPY public ./public
+COPY src ./src
+
+# Build and clean artifacts
+ENV NODE_ENV=production
+RUN pnpm build && \
+    find dist -type f \( -name "*.map" -o -name ".*" \) -delete && \
+    rm -f dist/stats.html
+
+# ==============================================================================
+# Stage 2: Static Nginx Binary Builder
+# ==============================================================================
+FROM alpine:${ALPINE_VERSION}@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e01958 AS nginx-builder
+
+ARG NGINX_VERSION
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ENV NGINX_SHA256=627fe086209bba80a2853a0add9d958d7ebbdffa1a8467a5784c9a6b4f03d738
+
+# Log build platform info for multi-arch
+RUN echo "Building on $BUILDPLATFORM for $TARGETPLATFORM"
+
+# Install build dependencies
+RUN apk add --no-cache \
+    gcc g++ musl-dev make linux-headers curl \
+    pcre-dev pcre2-dev zlib-dev zlib-static \
+    openssl-dev openssl-libs-static upx
+
+# Download and verify nginx
+WORKDIR /tmp
+RUN curl -fSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" -o nginx.tar.gz && \
+    echo "${NGINX_SHA256}  nginx.tar.gz" | sha256sum -c -
+
+# Build fully static nginx with minimal modules
+RUN tar -xzf nginx.tar.gz && \
+    cd "nginx-${NGINX_VERSION}" && \
+    ./configure \
+        --prefix=/usr/local/nginx \
+        --sbin-path=/usr/local/nginx/sbin/nginx \
+        --conf-path=/etc/nginx/nginx.conf \
+        --pid-path=/run/nginx.pid \
+        --lock-path=/run/nginx.lock \
+        --error-log-path=/dev/stderr \
+        --http-log-path=/dev/stdout \
+        --user=nobody \
+        --group=nobody \
+        # Performance features
+        --with-threads \
+        --with-file-aio \
+        --with-http_ssl_module \
+        --with-http_v2_module \
+        --with-http_gzip_static_module \
+        --with-http_stub_status_module \
+        --with-pcre \
+        --with-pcre-jit \
+        # Static linking and optimization
+        --with-cc-opt='-static -Os -ffunction-sections -fdata-sections' \
+        --with-ld-opt='-static -Wl,--gc-sections' \
+        # Disable unnecessary modules
+        --without-http_charset_module \
+        --without-http_ssi_module \
+        --without-http_userid_module \
+        --without-http_auth_basic_module \
+        --without-http_mirror_module \
+        --without-http_autoindex_module \
+        --without-http_geo_module \
+        --without-http_map_module \
+        --without-http_split_clients_module \
+        --without-http_referer_module \
+        --without-http_rewrite_module \
+        --without-http_proxy_module \
+        --without-http_fastcgi_module \
+        --without-http_uwsgi_module \
+        --without-http_scgi_module \
+        --without-http_grpc_module \
+        --without-http_memcached_module \
+        --without-http_limit_conn_module \
+        --without-http_limit_req_module \
+        --without-http_empty_gif_module \
+        --without-http_browser_module \
+        --without-http_upstream_hash_module \
+        --without-http_upstream_ip_hash_module \
+        --without-http_upstream_least_conn_module \
+        --without-http_upstream_random_module \
+        --without-http_upstream_keepalive_module \
+        --without-http_upstream_zone_module \
+        --without-mail_pop3_module \
+        --without-mail_imap_module \
+        --without-mail_smtp_module \
+        --without-stream_limit_conn_module \
+        --without-stream_access_module \
+        --without-stream_geo_module \
+        --without-stream_map_module \
+        --without-stream_split_clients_module \
+        --without-stream_return_module \
+        --without-stream_set_module \
+        --without-stream_upstream_hash_module \
+        --without-stream_upstream_least_conn_module \
+        --without-stream_upstream_random_module \
+        --without-stream_upstream_zone_module && \
+    make -j"$(nproc)" && \
+    make install
+
+# Optimize binary: strip symbols + UPX compression
+RUN strip --strip-all /usr/local/nginx/sbin/nginx && \
+    upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    /usr/local/nginx/sbin/nginx -V
+
+# ==============================================================================
+# Stage 3: Asset Compression
+# ==============================================================================
+FROM alpine:${ALPINE_VERSION}@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e01958 AS compressor
+
+RUN apk add --no-cache brotli gzip findutils
+
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+
+# Parallel compression: gzip + brotli for all text-based assets
+RUN find dist -type f \
+    \( -name "*.html" -o -name "*.css" -o -name "*.js" -o \
+       -name "*.json" -o -name "*.svg" -o -name "*.xml" \) \
+    -print0 | xargs -0 -P"$(nproc)" -I {} sh -c 'gzip -9 -k -f "{}" && brotli -q 11 -f "{}"'
+
+# ==============================================================================
+# Stage 4: Minimal Filesystem Preparation
+# ==============================================================================
+FROM alpine:${ALPINE_VERSION}@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e01958 AS rootfs
+
+# Create directory structure
+RUN mkdir -p \
+    /rootfs/etc/nginx/conf.d \
+    /rootfs/usr/share/nginx/html \
+    /rootfs/var/log/nginx \
+    /rootfs/var/cache/nginx \
+    /rootfs/usr/local/nginx/{client_body,proxy,fastcgi,uwsgi,scgi}_temp \
+    /rootfs/tmp \
+    /rootfs/run && \
+    chmod 1777 /rootfs/tmp
+
+# Create minimal user database (nobody user)
+RUN echo "nobody:x:65534:65534:nobody:/:/sbin/nologin" > /rootfs/etc/passwd && \
+    echo "nobody:x:65534:" > /rootfs/etc/group
+
+# Copy nginx configuration
+COPY nginx.conf /rootfs/etc/nginx/conf.d/default.conf
+COPY --from=nginx-builder /etc/nginx/mime.types /rootfs/etc/nginx/mime.types
+COPY --from=compressor /app/dist /rootfs/usr/share/nginx/html
+
+# Create main nginx.conf
+RUN cat > /rootfs/etc/nginx/nginx.conf <<'EOF'
+worker_processes auto;
+error_log stderr warn;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    access_log /dev/stdout;
+
+    # Performance optimizations
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    server_tokens off;
+
+    # Compression
+    gzip on;
+    gzip_static on;
+    gzip_vary on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
+
+    include /etc/nginx/conf.d/*.conf;
+}
+EOF
+
+# Set proper ownership
+RUN chown -R 65534:65534 \
+    /rootfs/usr/share/nginx/html \
+    /rootfs/var/log/nginx \
+    /rootfs/var/cache/nginx \
+    /rootfs/usr/local/nginx \
+    /rootfs/tmp \
+    /rootfs/run
+
+# ==============================================================================
+# Stage 5: Final Distroless Image (FROM SCRATCH)
+# ==============================================================================
+FROM scratch
+
+# Re-declare build args for metadata
+ARG BUILD_DATE
+ARG GIT_COMMIT=unknown
+
+# OCI metadata labels
+LABEL org.opencontainers.image.title="Vite React - Distroless" \
+      org.opencontainers.image.description="Distroless minimal image (<6MB) - UPX compressed" \
+      org.opencontainers.image.version="2.2.0-distroless-upx" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.base.name="scratch" \
+      org.opencontainers.image.source="https://github.com/riipandi/vite-react-template" \
+      org.opencontainers.image.licenses="MIT OR Apache-2.0" \
+      maintainer="contest-2025-optimized"
+
+# Copy static nginx binary and minimal filesystem
+COPY --from=nginx-builder /usr/local/nginx/sbin/nginx /usr/sbin/nginx
+COPY --from=rootfs /rootfs /
+
+# Run as non-root user (nobody = 65534)
+USER 65534:65534
+
+EXPOSE 3000
+
+# Lightweight healthcheck using nginx config test
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["/usr/sbin/nginx", "-t", "-q"]
+
+STOPSIGNAL SIGTERM
+
+ENTRYPOINT ["/usr/sbin/nginx"]
+CMD ["-g", "daemon off;"]
