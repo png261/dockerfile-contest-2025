@@ -94,7 +94,8 @@
 
             <!-- Title Slide -->
             <section class="center">
-                <h1>DOCKERFILE CONTEST 2025</h1>
+                <h4>DOCKERFILE CONTEST 2025</h4>
+                <h1>TOP 1 VITE REACT</h1>
                 <div style="margin-top: 60px;">
                     <h3 style="color: #42affa;">Nguyễn Hữu Phương</h3>
                     <p style="font-size: 0.8em; margin-top: 20px;">
@@ -386,24 +387,6 @@ RUN pnpm build && \
                 </ul>
             </section>
 
-            <!-- Stage 1 Summary -->
-            <section>
-                <h3>Tóm tắt Stage 1</h3>
-                <div class="highlight-box">
-                    <p><strong>INPUT:</strong> package.json, source code</p>
-                    <p><strong>OUTPUT:</strong> /app/dist (optimized static assets)</p>
-                    <p><strong>SIZE:</strong> ~450 MB (builder image, sẽ bị discard)</p>
-                    <p><strong>TIME:</strong> 35s (cached) / 300s (cold)</p>
-                    <p><strong>Kỹ thuật sử dụng:</strong></p>
-                    <ul>
-                        <li>Corepack (faster pnpm setup)</li>
-                        <li>BuildKit cache mount (93% faster)</li>
-                        <li>Layer optimization (efficient caching)</li>
-                        <li>Artifact cleanup (12-15 MB saved)</li>
-                    </ul>
-                </div>
-            </section>
-
             <!-- Stage 2 -->
             <section>
                 <h2>2.2 Stage 2: Nginx Static Binary Builder</h2>
@@ -613,26 +596,6 @@ RUN /usr/local/nginx/sbin/nginx -V</code></pre>
                 </ul>
             </section>
 
-            <!-- Stage 2 Summary -->
-            <section>
-                <h3>Tóm tắt Stage 2</h3>
-                <div class="highlight-box">
-                    <p><strong>INPUT:</strong> nginx-1.26.2.tar.gz</p>
-                    <p><strong>OUTPUT:</strong> Static nginx binary (2.1 MB)</p>
-                    <p><strong>SIZE:</strong> ~450 MB (builder, sẽ bị discard)</p>
-                    <p><strong>TIME:</strong> 180-240s (compile time)</p>
-                    <p><strong>Kỹ thuật sử dụng:</strong></p>
-                    <ul>
-                        <li>Digest-pinned images (security)</li>
-                        <li>SHA256 verification (integrity)</li>
-                        <li>Static linking (no dependencies)</li>
-                        <li>Minimal modules (76% smaller)</li>
-                        <li>UPX compression (56% reduction)</li>
-                    </ul>
-                    <p><strong>Final binary:</strong> 2.1 MB (từ 22 MB original)</p>
-                </div>
-            </section>
-
             <!-- Stage 3 -->
             <section>
                 <h2>2.3 Stage 3: Asset Compression</h2>
@@ -801,30 +764,6 @@ Quality 11: 2.34s, 245KB → 61KB  (75%)</code></pre>
                 <p><strong>Kết luận:</strong> Build time có thể chậm → chọn best quality</p>
             </section>
 
-            <!-- Stage 3 Summary -->
-            <section>
-                <h3>Tóm tắt Stage 3</h3>
-                <div class="highlight-box">
-                    <p><strong>INPUT:</strong> Static assets từ Stage 1</p>
-                    <p><strong>OUTPUT:</strong> Pre-compressed assets (.gz + .br)</p>
-                    <p><strong>SIZE:</strong> ~150 MB (compressor, sẽ bị discard)</p>
-                    <p><strong>TIME:</strong> 11s (parallel) vs 78s (sequential)</p>
-                    <p><strong>Kỹ thuật sử dụng:</strong></p>
-                    <ul>
-                        <li>Pre-compression (zero runtime CPU)</li>
-                        <li>Parallel processing (7x faster)</li>
-                        <li>Dual format (gzip + brotli)</li>
-                        <li>Max quality (build time trade-off OK)</li>
-                    </ul>
-                    <p><strong>Kết quả:</strong></p>
-                    <ul>
-                        <li>Gzip: 72% average reduction</li>
-                        <li>Brotli: 77% average reduction</li>
-                        <li>Network transfer giảm 75%</li>
-                    </ul>
-                </div>
-            </section>
-
             <!-- Stage 4 -->
             <section>
                 <h2>2.4 Stage 4: Minimal Filesystem Preparation</h2>
@@ -986,30 +925,6 @@ USER 65534:65534</code></pre>
                     </tbody>
                 </table>
                 <p><strong>Sticky bit (1777)</strong> on <code>/tmp</code>: Chỉ owner có thể delete files</p>
-            </section>
-
-            <!-- Stage 4 Summary -->
-            <section>
-                <h3>Tóm tắt Stage 4</h3>
-                <div class="highlight-box">
-                    <p><strong>INPUT:</strong> Nginx binary, configs, assets</p>
-                    <p><strong>OUTPUT:</strong> Complete rootfs structure</p>
-                    <p><strong>SIZE:</strong> ~50 MB (rootfs builder, sẽ bị discard)</p>
-                    <p><strong>TIME:</strong> 2-3s</p>
-                    <p><strong>Kỹ thuật sử dụng:</strong></p>
-                    <ul>
-                        <li>Rootfs pattern (staging for scratch)</li>
-                        <li>Minimal user database (nobody only)</li>
-                        <li>Required temp directories (nginx expectations)</li>
-                        <li>Proper ownership (non-root compatible)</li>
-                    </ul>
-                    <p><strong>Final rootfs:</strong> ~3 MB</p>
-                    <ul>
-                        <li>Config files: ~50 KB</li>
-                        <li>Static assets: ~815 KB</li>
-                        <li>Structure: metadata only</li>
-                    </ul>
-                </div>
             </section>
 
             <!-- Stage 5 -->
@@ -1265,32 +1180,6 @@ docker run --rm app:contest -c /custom/nginx.conf
 
 # All append to ENTRYPOINT</code></pre>
                 <p><strong>Best practice:</strong> ENTRYPOINT = executable, CMD = default args</p>
-            </section>
-
-            <!-- Stage 5 Summary -->
-            <section>
-                <h3>Tóm tắt Stage 5</h3>
-                <div class="highlight-box">
-                    <p><strong>INPUT:</strong> Nginx binary (2.1MB), rootfs (3MB)</p>
-                    <p><strong>OUTPUT:</strong> Final production image</p>
-                    <p><strong>SIZE:</strong> 5.38 MB</p>
-                    <p><strong>TIME:</strong> 1s (chỉ COPY layers)</p>
-                    <p><strong>Kỹ thuật sử dụng:</strong></p>
-                    <ul>
-                        <li>FROM scratch (zero attack surface)</li>
-                        <li>OCI labels (standard metadata)</li>
-                        <li>Non-root USER (least privilege)</li>
-                        <li>Lightweight HEALTHCHECK (nginx -t)</li>
-                        <li>ENTRYPOINT+CMD pattern (flexible)</li>
-                    </ul>
-                    <p><strong>Security features:</strong></p>
-                    <ul>
-                        <li>No shell, no utilities</li>
-                        <li>Static binary (no dependencies)</li>
-                        <li>Non-root user (limited permissions)</li>
-                        <li>0 CVEs (nothing to exploit)</li>
-                    </ul>
-                </div>
             </section>
 
             <!-- END with Metrics -->
