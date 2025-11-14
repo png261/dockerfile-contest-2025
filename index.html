@@ -24,11 +24,12 @@
             text-transform: none;
         }
         .reveal pre {
-            font-size: 0.55em;
+            font-size: 0.75em;
             width: 100%;
         }
         .reveal code {
             font-family: 'Courier New', monospace;
+            font-size: 1.1em;
         }
         .reveal .slides section {
             text-align: left;
@@ -50,6 +51,7 @@
             margin: 20px auto;
             border-collapse: collapse;
             width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .reveal table th {
             background: rgba(255, 255, 255, 0.15);
@@ -61,6 +63,9 @@
         .reveal table td {
             padding: 12px 20px;
             border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .reveal table tbody tr:last-child td {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
         }
         .reveal table tr:nth-child(even) {
             background: rgba(255, 255, 255, 0.05);
@@ -89,206 +94,178 @@
 
             <!-- Title Slide -->
             <section class="center">
-                <h1>XÂY DỰNG DOCKERFILE CHẤT LƯỢNG CAO</h1>
-                <h2>Từ Tư Duy Đến Tối Ưu Hóa</h2>
-                <p><strong>Thời lượng:</strong> 15 phút</p>
-                <p><strong>Mục tiêu:</strong> Trình bày phương pháp, kỹ thuật và kinh nghiệm thực tế tạo Dockerfile production-ready</p>
+                <h1>DOCKERFILE CONTEST 2025</h1>
+                <div style="margin-top: 60px;">
+                    <h3 style="color: #42affa;">Nguyễn Hữu Phương</h3>
+                    <p style="font-size: 0.8em; margin-top: 20px;">
+                        <strong>GitHub:</strong> <a href="https://github.com/png261" style="color: #60d0ff;">github.com/png261</a><br>
+                        <strong>Email:</strong> <a href="mailto:nhphuong.code@gmail.com" style="color: #60d0ff;">nhphuong.code@gmail.com</a>
+                    </p>
+                </div>
             </section>
 
-            <!-- Part 1 Header -->
+            <!-- Overview Section -->
             <section class="center">
-                <h1>PHẦN 1: TỔNG QUAN VỀ DOCKERFILE</h1>
+                <h1>TỔNG QUAN</h1>
             </section>
 
-            <!-- 1.1 Kết Quả Đạt Được - Size -->
+            <!-- Architecture Overview -->
             <section>
-                <h2>1.1 Kết Quả Đạt Được - Về Kích Thước</h2>
-                <pre><code>┌─────────────────────────────────────────────┐
-│ Image Size: 5.38 MB                         │
-│ ├─ nginx binary (UPX):     2.1 MB (39%)     │
-│ ├─ Static assets:          815 KB (15%)     │
-│ └─ Metadata + configs:     ~2.4 MB (46%)    │
-└─────────────────────────────────────────────┘
+                <h2>Architecture Overview</h2>
+                <h3 style="text-align: center; color: #42affa;">MULTI-STAGE BUILD PIPELINE (5 stages)</h3>
 
-So sánh:
-• nginx:alpine    → 70 MB    (92.5% nhỏ hơn)
-• nginx:latest    → 190 MB   (97.2% nhỏ hơn)
-• Vite React app  → 5.38 MB  ✓</code></pre>
-                <p><em>"Image size reduction is critical for faster deployments, reduced bandwidth costs, and improved security posture"</em> - Docker Best Practices Guide</p>
-            </section>
-
-            <!-- Performance -->
-            <section>
-                <h2>Về Performance</h2>
                 <table>
                     <thead>
                         <tr>
-                            <th>Metric</th>
-                            <th>Giá trị</th>
-                            <th>Benchmark</th>
+                            <th>Stage</th>
+                            <th>Input</th>
+                            <th>Output</th>
+                            <th>Size</th>
+                            <th>Time</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Startup time</td>
-                            <td class="metric-value">3-5s</td>
-                            <td>< 10s ✓</td>
+                            <td><strong>1: Application Builder</strong><br><code>node:20-alpine</code></td>
+                            <td>package.json, source code</td>
+                            <td>/app/dist (optimized assets)</td>
+                            <td>450 MB <span style="color: #a0a0a0;">(discarded)</span></td>
+                            <td><span class="good">35s</span> (cached) / <span class="bad">300s</span> (cold)</td>
                         </tr>
                         <tr>
-                            <td>Memory (idle)</td>
-                            <td class="metric-value">10-12 MB</td>
-                            <td>< 50 MB ✓</td>
+                            <td><strong>2: Nginx Builder</strong><br><code>alpine:3.20</code></td>
+                            <td>nginx-1.26.2.tar.gz</td>
+                            <td>Static nginx binary (2.1 MB)</td>
+                            <td>450 MB <span style="color: #a0a0a0;">(discarded)</span></td>
+                            <td>180-240s</td>
                         </tr>
                         <tr>
-                            <td>Memory (peak load)</td>
-                            <td class="metric-value">15-18 MB</td>
-                            <td>< 100 MB ✓</td>
+                            <td><strong>3: Compressor</strong><br><code>alpine:3.20</code></td>
+                            <td>Static assets</td>
+                            <td>Pre-compressed (.gz + .br)</td>
+                            <td>150 MB <span style="color: #a0a0a0;">(discarded)</span></td>
+                            <td><span class="good">11s</span> (parallel)</td>
                         </tr>
                         <tr>
-                            <td>Graceful shutdown</td>
-                            <td class="metric-value">0.212s</td>
-                            <td>< 10s ✓</td>
+                            <td><strong>4: Rootfs Prep</strong><br><code>alpine:3.20</code></td>
+                            <td>Configs, assets</td>
+                            <td>Complete rootfs structure</td>
+                            <td>50 MB <span style="color: #a0a0a0;">(discarded)</span></td>
+                            <td>2-3s</td>
                         </tr>
                         <tr>
-                            <td>HTTP response</td>
-                            <td class="metric-value">< 10ms</td>
-                            <td>< 100ms ✓</td>
+                            <td><strong>5: Final</strong><br><code>FROM scratch</code></td>
+                            <td>Nginx (2.1MB), rootfs (3MB)</td>
+                            <td>Production image</td>
+                            <td><span class="metric-value">5.38 MB ✓</span></td>
+                            <td><span class="good">1s</span></td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="highlight-box">
-                    <p><strong>Kỹ thuật:</strong></p>
-                    <ul>
-                        <li>Nginx worker_processes auto → tự động scale theo CPU</li>
-                        <li>sendfile + tcp_nopush → zero-copy optimization</li>
-                        <li>Pre-compressed assets (gzip + brotli) → no runtime compression</li>
-                    </ul>
+            </section>
+
+            <!-- Kỹ Thuật Tổng Hợp -->
+            <section>
+                <h2>Kỹ Thuật Tổng Hợp</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                    <div class="highlight-box">
+                        <h3>Build Optimization</h3>
+                        <ul>
+                            <li>✓ BuildKit cache mounts<br><small>93% faster rebuilds</small></li>
+                            <li>✓ Layer optimization<br><small>Efficient caching</small></li>
+                            <li>✓ Parallel compression<br><small>7x faster</small></li>
+                            <li>✓ Digest-pinned bases<br><small>Reproducible builds</small></li>
+                        </ul>
+                    </div>
+                    <div class="highlight-box">
+                        <h3>Size Optimization</h3>
+                        <ul>
+                            <li>✓ FROM scratch<br><small>Zero base size</small></li>
+                            <li>✓ Static linking<br><small>No dependencies</small></li>
+                            <li>✓ Minimal modules<br><small>76% smaller nginx</small></li>
+                            <li>✓ UPX compression<br><small>56% binary reduction</small></li>
+                            <li>✓ Artifact cleanup<br><small>12-15 MB saved</small></li>
+                            <li>✓ Pre-compression<br><small>75% network reduction</small></li>
+                        </ul>
+                    </div>
+                    <div class="highlight-box">
+                        <h3>Security Hardening</h3>
+                        <ul>
+                            <li>✓ FROM scratch<br><small>0 attack surface</small></li>
+                            <li>✓ Non-root user (65534)<br><small>Least privilege</small></li>
+                            <li>✓ Static binary<br><small>No lib vulnerabilities</small></li>
+                            <li>✓ SHA256 verification<br><small>Supply chain safety</small></li>
+                            <li>✓ No shell<br><small>No command injection</small></li>
+                        </ul>
+                    </div>
                 </div>
             </section>
 
-            <!-- Security -->
+            <!-- Metrics Summary -->
             <section>
-                <h2>Về Security</h2>
-                <pre><code>┌────────────────────────────────────────────────┐
-│ SECURITY SCORE: 35/35                          │
-├────────────────────────────────────────────────┤
-│ ✓ FROM scratch        → 0 packages to exploit │
-│ ✓ Non-root user       → UID 65534 (nobody)    │
-│ ✓ Static binary       → No dynamic libs       │
-│ ✓ No shell            → No command injection  │
-│ ✓ CVE count           → 0 vulnerabilities     │
-│ ✓ Digest-pinned bases → Supply chain safety   │
-└────────────────────────────────────────────────┘</code></pre>
-                <p><em>"FROM scratch provides the smallest attack surface possible - if there's no OS, there's nothing to exploit"</em> - Google Cloud Security Best Practices</p>
-            </section>
-
-            <!-- 1.2 Kỹ Thuật Nổi Bật -->
-            <section>
-                <h2>1.2 Kỹ Thuật Nổi Bật - Multi-stage Build</h2>
-                <pre><code class="language-dockerfile"># Stage 1: builder      → Build ứng dụng
-# Stage 2: nginx-builder → Compile nginx static
-# Stage 3: compressor   → Nén assets
-# Stage 4: rootfs       → Chuẩn bị filesystem
-# Stage 5: scratch      → Final image</code></pre>
-                <p><strong>Lợi ích:</strong> Mỗi stage tối ưu riêng, không layer nào thừa trong image cuối</p>
-            </section>
-
-            <!-- UPX Compression -->
-            <section>
-                <h2>UPX Compression</h2>
-                <pre><code class="language-bash">Before: nginx binary = 5.2 MB
-After:  nginx binary = 2.1 MB (59% reduction)
-
-Command: upx --best --lzma /usr/sbin/nginx</code></pre>
-                <div class="highlight-box">
-                    <p><strong>Trade-off:</strong></p>
-                    <ul>
-                        <li class="good">✓ Giảm 60% kích thước</li>
-                        <li class="bad">✗ Tăng ~50ms startup time (decompress lúc load)</li>
-                        <li class="bad">✗ Tăng ~2MB memory usage (decompressed in RAM)</li>
-                    </ul>
-                    <p><strong>Kết luận:</strong> Chấp nhận được cho production</p>
-                </div>
-            </section>
-
-            <!-- Static Linking -->
-            <section>
-                <h2>Static Linking</h2>
-                <pre><code class="language-dockerfile">--with-cc-opt='-static -Os -ffunction-sections -fdata-sections'
---with-ld-opt='-static -Wl,--gc-sections'</code></pre>
-                <p><strong>Giải thích:</strong></p>
-                <ul>
-                    <li><code>-static</code>: Link tất cả libraries vào binary</li>
-                    <li><code>-Os</code>: Optimize cho size</li>
-                    <li><code>-ffunction-sections</code>: Mỗi function → section riêng</li>
-                    <li><code>--gc-sections</code>: Linker xóa unused sections</li>
-                </ul>
-                <p><strong>Kết quả:</strong> Binary độc lập, không cần libc, libssl, libpcre</p>
-            </section>
-
-            <!-- Pre-compression -->
-            <section>
-                <h2>Pre-compression (Gzip + Brotli)</h2>
-                <pre><code class="language-dockerfile"># Nén song song với xargs
-find dist -type f \( -name "*.html" -o -name "*.css" ... \) \
-  -print0 | xargs -0 -P"$(nproc)" -I {} sh -c \
-  'gzip -9 -k -f "{}" && brotli -q 11 -f "{}"'</code></pre>
+                <h2>Metrics Summary</h2>
                 <table>
                     <thead>
                         <tr>
-                            <th>File</th>
-                            <th>Original</th>
-                            <th>Gzip</th>
-                            <th>Brotli</th>
-                            <th>Savings</th>
+                            <th colspan="2">FINAL RESULTS</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>index.html</td>
-                            <td>15 KB</td>
-                            <td>4 KB</td>
-                            <td class="metric-value">3.5 KB</td>
-                            <td class="good">76%</td>
+                            <td><strong>Image size</strong></td>
+                            <td><span class="metric-value">5.38 MB</span></td>
                         </tr>
                         <tr>
-                            <td>main.js</td>
-                            <td>245 KB</td>
-                            <td>68 KB</td>
-                            <td class="metric-value">61 KB</td>
-                            <td class="good">75%</td>
+                            <td><strong>Base image</strong></td>
+                            <td>scratch (0 MB)</td>
                         </tr>
                         <tr>
-                            <td>styles.css</td>
-                            <td>42 KB</td>
-                            <td>9 KB</td>
-                            <td class="metric-value">7.8 KB</td>
-                            <td class="good">81%</td>
+                            <td><strong>Layers</strong></td>
+                            <td>2 data layers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CVEs</strong></td>
+                            <td><span class="metric-value">0 vulnerabilities</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Startup time</strong></td>
+                            <td><span class="good">3-5 seconds</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Memory (idle)</strong></td>
+                            <td><span class="good">10-12 MB</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Shutdown time</strong></td>
+                            <td><span class="good">0.212 seconds</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>HTTP response</strong></td>
+                            <td><span class="good">&lt; 10ms</span></td>
+                        </tr>
+                        <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
+                            <td><strong>Build time (cold)</strong></td>
+                            <td>7.5 minutes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Build time (warm)</strong></td>
+                            <td><span class="good">45 seconds</span></td>
+                        </tr>
+                        <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
+                            <td><strong>vs nginx:alpine</strong></td>
+                            <td><span class="metric-value">92.5% smaller</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>vs nginx:latest</strong></td>
+                            <td><span class="metric-value">97.2% smaller</span></td>
                         </tr>
                     </tbody>
                 </table>
-                <p><strong>Nginx config:</strong> <code>gzip_static on;</code> → serve pre-compressed files</p>
             </section>
 
-            <!-- BuildKit Cache -->
-            <section>
-                <h2>BuildKit Cache Mounts</h2>
-                <pre><code class="language-dockerfile">RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile</code></pre>
-                <div class="highlight-box">
-                    <p><strong>Lợi ích:</strong></p>
-                    <ul>
-                        <li>Build lần 1: 450s (download packages)</li>
-                        <li>Build lần 2: 35s (cache hit)</li>
-                        <li><strong>92% faster</strong> subsequent builds</li>
-                    </ul>
-                </div>
-                <p><em>"BuildKit cache mounts enable persistent caching across builds without adding layers"</em> - Docker BuildKit Documentation</p>
-            </section>
-
-            <!-- Part 2 Header -->
+            <!-- Chi Tiết Các Stage Header -->
             <section class="center">
-                <h1>PHẦN 2: CHI TIẾT CÁC STAGE</h1>
+                <h1>CHI TIẾT CÁC STAGE</h1>
             </section>
 
             <!-- Stage 1 -->
@@ -412,16 +389,19 @@ RUN pnpm build && \
             <!-- Stage 1 Summary -->
             <section>
                 <h3>Tóm tắt Stage 1</h3>
-                <pre><code>INPUT:  package.json, source code
-OUTPUT: /app/dist (optimized static assets)
-SIZE:   ~450 MB (builder image, sẽ bị discard)
-TIME:   35s (cached) / 300s (cold)
-
-Kỹ thuật sử dụng:
-├─ Corepack (faster pnpm setup)
-├─ BuildKit cache mount (93% faster)
-├─ Layer optimization (efficient caching)
-└─ Artifact cleanup (12-15 MB saved)</code></pre>
+                <div class="highlight-box">
+                    <p><strong>INPUT:</strong> package.json, source code</p>
+                    <p><strong>OUTPUT:</strong> /app/dist (optimized static assets)</p>
+                    <p><strong>SIZE:</strong> ~450 MB (builder image, sẽ bị discard)</p>
+                    <p><strong>TIME:</strong> 35s (cached) / 300s (cold)</p>
+                    <p><strong>Kỹ thuật sử dụng:</strong></p>
+                    <ul>
+                        <li>Corepack (faster pnpm setup)</li>
+                        <li>BuildKit cache mount (93% faster)</li>
+                        <li>Layer optimization (efficient caching)</li>
+                        <li>Artifact cleanup (12-15 MB saved)</li>
+                    </ul>
+                </div>
             </section>
 
             <!-- Stage 2 -->
@@ -599,37 +579,58 @@ RUN /usr/local/nginx/sbin/nginx -V</code></pre>
             <!-- UPX Trade-offs -->
             <section>
                 <h3>UPX Trade-offs</h3>
-                <pre><code>┌────────────────────────────────────────────┐
-│          Advantages   │   Disadvantages    │
-├───────────────────────┼────────────────────┤
-│ ✓ 56% size reduction  │ ✗ +50ms startup    │
-│ ✓ Faster download     │ ✗ +2MB RAM usage   │
-│ ✓ Less disk usage     │ ✗ Slower first run │
-│ ✓ Faster deployment   │ ✗ Anti-virus flags │
-└────────────────────────────────────────────┘</code></pre>
-                <p><strong>Kết luận:</strong></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Advantages</th>
+                            <th>Disadvantages</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="good">✓</span> 56% size reduction</td>
+                            <td><span class="bad">✗</span> +50ms startup</td>
+                        </tr>
+                        <tr>
+                            <td><span class="good">✓</span> Faster download</td>
+                            <td><span class="bad">✗</span> +2MB RAM usage</td>
+                        </tr>
+                        <tr>
+                            <td><span class="good">✓</span> Less disk usage</td>
+                            <td><span class="bad">✗</span> Slower first run</td>
+                        </tr>
+                        <tr>
+                            <td><span class="good">✓</span> Faster deployment</td>
+                            <td><span class="bad">✗</span> Anti-virus flags</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 30px;">Kết luận:</h3>
                 <ul>
-                    <li>Production: ✓ Recommended (network > CPU)</li>
-                    <li>Development: ✗ Skip (faster iteration)</li>
+                    <li><strong>Production:</strong> <span class="good">✓ Recommended</span> (network > CPU)</li>
+                    <li><strong>Development:</strong> <span class="bad">✗ Skip</span> (faster iteration)</li>
                 </ul>
             </section>
 
             <!-- Stage 2 Summary -->
             <section>
                 <h3>Tóm tắt Stage 2</h3>
-                <pre><code>INPUT:  nginx-1.26.2.tar.gz
-OUTPUT: Static nginx binary (2.1 MB)
-SIZE:   ~450 MB (builder, sẽ bị discard)
-TIME:   180-240s (compile time)
-
-Kỹ thuật sử dụng:
-├─ Digest-pinned images (security)
-├─ SHA256 verification (integrity)
-├─ Static linking (no dependencies)
-├─ Minimal modules (76% smaller)
-└─ UPX compression (56% reduction)
-
-Final binary: 2.1 MB (từ 22 MB original)</code></pre>
+                <div class="highlight-box">
+                    <p><strong>INPUT:</strong> nginx-1.26.2.tar.gz</p>
+                    <p><strong>OUTPUT:</strong> Static nginx binary (2.1 MB)</p>
+                    <p><strong>SIZE:</strong> ~450 MB (builder, sẽ bị discard)</p>
+                    <p><strong>TIME:</strong> 180-240s (compile time)</p>
+                    <p><strong>Kỹ thuật sử dụng:</strong></p>
+                    <ul>
+                        <li>Digest-pinned images (security)</li>
+                        <li>SHA256 verification (integrity)</li>
+                        <li>Static linking (no dependencies)</li>
+                        <li>Minimal modules (76% smaller)</li>
+                        <li>UPX compression (56% reduction)</li>
+                    </ul>
+                    <p><strong>Final binary:</strong> 2.1 MB (từ 22 MB original)</p>
+                </div>
             </section>
 
             <!-- Stage 3 -->
@@ -803,21 +804,25 @@ Quality 11: 2.34s, 245KB → 61KB  (75%)</code></pre>
             <!-- Stage 3 Summary -->
             <section>
                 <h3>Tóm tắt Stage 3</h3>
-                <pre><code>INPUT:  Static assets từ Stage 1
-OUTPUT: Pre-compressed assets (.gz + .br)
-SIZE:   ~150 MB (compressor, sẽ bị discard)
-TIME:   11s (parallel) vs 78s (sequential)
-
-Kỹ thuật sử dụng:
-├─ Pre-compression (zero runtime CPU)
-├─ Parallel processing (7x faster)
-├─ Dual format (gzip + brotli)
-└─ Max quality (build time trade-off OK)
-
-Kết quả:
-├─ Gzip:   72% average reduction
-├─ Brotli: 77% average reduction
-└─ Network transfer giảm 75%</code></pre>
+                <div class="highlight-box">
+                    <p><strong>INPUT:</strong> Static assets từ Stage 1</p>
+                    <p><strong>OUTPUT:</strong> Pre-compressed assets (.gz + .br)</p>
+                    <p><strong>SIZE:</strong> ~150 MB (compressor, sẽ bị discard)</p>
+                    <p><strong>TIME:</strong> 11s (parallel) vs 78s (sequential)</p>
+                    <p><strong>Kỹ thuật sử dụng:</strong></p>
+                    <ul>
+                        <li>Pre-compression (zero runtime CPU)</li>
+                        <li>Parallel processing (7x faster)</li>
+                        <li>Dual format (gzip + brotli)</li>
+                        <li>Max quality (build time trade-off OK)</li>
+                    </ul>
+                    <p><strong>Kết quả:</strong></p>
+                    <ul>
+                        <li>Gzip: 72% average reduction</li>
+                        <li>Brotli: 77% average reduction</li>
+                        <li>Network transfer giảm 75%</li>
+                    </ul>
+                </div>
             </section>
 
             <!-- Stage 4 -->
@@ -906,64 +911,9 @@ USER 65534:65534  # Nginx cần lookup UID → username</code></pre>
                 <p><strong>Lưu ý:</strong> Dù disable modules, nginx vẫn expect dirs tồn tại</p>
             </section>
 
-            <!-- Inline Config Generation -->
-            <section>
-                <h3>Kỹ thuật 4: Inline Config Generation</h3>
-                <pre><code class="language-dockerfile"># Create main nginx.conf inline
-RUN cat > /rootfs/etc/nginx/nginx.conf <<'EOF'
-worker_processes auto;
-error_log stderr warn;
-pid /run/nginx.pid;
-
-events {
-    worker_connections 1024;
-    use epoll;
-    multi_accept on;
-}
-
-http {
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
-
-    sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
-
-    gzip on;
-    gzip_static on;
-    gzip_vary on;
-
-    include /etc/nginx/conf.d/*.conf;
-}
-EOF</code></pre>
-            </section>
-
-            <!-- Inline vs COPY -->
-            <section>
-                <h3>Ưu điểm inline config vs COPY</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div>
-                        <p class="bad"><strong>❌ COPY from host</strong></p>
-                        <pre><code class="language-dockerfile">COPY nginx.conf /rootfs/etc/nginx/nginx.conf</code></pre>
-                    </div>
-                    <div>
-                        <p class="good"><strong>✓ Inline heredoc</strong></p>
-                        <pre><code class="language-dockerfile">RUN cat > /rootfs/etc/nginx/nginx.conf <<'EOF'
-...
-EOF</code></pre>
-                    </div>
-                </div>
-                <p><strong>So sánh:</strong></p>
-                <ul>
-                    <li>COPY: Cần file trong context, thêm layer</li>
-                    <li>Inline: Self-contained, 1 layer duy nhất</li>
-                    <li>Inline: Dễ review (all in Dockerfile)</li>
-                </ul>
-            </section>
-
             <!-- Ownership Setup -->
             <section>
-                <h3>Kỹ thuật 5: Ownership Setup</h3>
+                <h3>Kỹ thuật 4: Ownership Setup</h3>
                 <pre><code class="language-dockerfile">RUN chown -R 65534:65534 \
     /rootfs/usr/share/nginx/html \
     /rootfs/var/log/nginx \
@@ -1041,22 +991,25 @@ USER 65534:65534</code></pre>
             <!-- Stage 4 Summary -->
             <section>
                 <h3>Tóm tắt Stage 4</h3>
-                <pre><code>INPUT:  Nginx binary, configs, assets
-OUTPUT: Complete rootfs structure
-SIZE:   ~50 MB (rootfs builder, sẽ bị discard)
-TIME:   2-3s
-
-Kỹ thuật sử dụng:
-├─ Rootfs pattern (staging for scratch)
-├─ Minimal user database (nobody only)
-├─ Required temp directories (nginx expectations)
-├─ Inline config generation (self-contained)
-└─ Proper ownership (non-root compatible)
-
-Final rootfs: ~3 MB
-├─ Config files:   ~50 KB
-├─ Static assets:  ~815 KB
-└─ Structure:      metadata only</code></pre>
+                <div class="highlight-box">
+                    <p><strong>INPUT:</strong> Nginx binary, configs, assets</p>
+                    <p><strong>OUTPUT:</strong> Complete rootfs structure</p>
+                    <p><strong>SIZE:</strong> ~50 MB (rootfs builder, sẽ bị discard)</p>
+                    <p><strong>TIME:</strong> 2-3s</p>
+                    <p><strong>Kỹ thuật sử dụng:</strong></p>
+                    <ul>
+                        <li>Rootfs pattern (staging for scratch)</li>
+                        <li>Minimal user database (nobody only)</li>
+                        <li>Required temp directories (nginx expectations)</li>
+                        <li>Proper ownership (non-root compatible)</li>
+                    </ul>
+                    <p><strong>Final rootfs:</strong> ~3 MB</p>
+                    <ul>
+                        <li>Config files: ~50 KB</li>
+                        <li>Static assets: ~815 KB</li>
+                        <li>Structure: metadata only</li>
+                    </ul>
+                </div>
             </section>
 
             <!-- Stage 5 -->
@@ -1115,17 +1068,48 @@ FROM scratch    → 0 bytes, không có OS</code></pre>
             <!-- FROM scratch benefits -->
             <section>
                 <h3>Security benefits</h3>
-                <pre><code>┌────────────────────────────────────────────┐
-│         Alpine       │      Scratch        │
-├──────────────────────┼─────────────────────┤
-│ Shell:     /bin/sh   │ Shell:     None ✓   │
-│ Utils:     ~50 bins  │ Utils:     None ✓   │
-│ Package:   apk       │ Package:   None ✓   │
-│ Libraries: ~100      │ Libraries: None ✓   │
-│ CVEs:      18-57     │ CVEs:      0    ✓   │
-│ Size:      7.5 MB    │ Size:      5.38MB ✓ │
-└────────────────────────────────────────────┘</code></pre>
-                <p><em>"The best defense is to have nothing to attack"</em> - Defense in Depth principle</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Alpine</th>
+                            <th>Scratch</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Shell</strong></td>
+                            <td>/bin/sh</td>
+                            <td><span class="good">None ✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Utils</strong></td>
+                            <td>~50 bins</td>
+                            <td><span class="good">None ✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Package</strong></td>
+                            <td>apk</td>
+                            <td><span class="good">None ✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Libraries</strong></td>
+                            <td>~100</td>
+                            <td><span class="good">None ✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>CVEs</strong></td>
+                            <td><span class="bad">18-57</span></td>
+                            <td><span class="metric-value">0 ✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Size</strong></td>
+                            <td>7.5 MB</td>
+                            <td><span class="metric-value">5.38MB ✓</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 30px;"><em>"The best defense is to have nothing to attack"</em> <br><strong>- Defense in Depth principle</strong></p>
             </section>
 
             <!-- OCI Labels -->
@@ -1286,137 +1270,102 @@ docker run --rm app:contest -c /custom/nginx.conf
             <!-- Stage 5 Summary -->
             <section>
                 <h3>Tóm tắt Stage 5</h3>
-                <pre><code>INPUT:  Nginx binary (2.1MB), rootfs (3MB)
-OUTPUT: Final production image
-SIZE:   5.38 MB
-TIME:   1s (chỉ COPY layers)
-
-Kỹ thuật sử dụng:
-├─ FROM scratch (zero attack surface)
-├─ OCI labels (standard metadata)
-├─ Non-root USER (least privilege)
-├─ Lightweight HEALTHCHECK (nginx -t)
-└─ ENTRYPOINT+CMD pattern (flexible)
-
-Security features:
-├─ No shell, no utilities
-├─ Static binary (no dependencies)
-├─ Non-root user (limited permissions)
-└─ 0 CVEs (nothing to exploit)</code></pre>
-            </section>
-
-            <!-- Summary Section -->
-            <section class="center">
-                <h1>TÓM TẮT VÀ KẾT LUẬN</h1>
-            </section>
-
-            <!-- Architecture Overview -->
-            <section>
-                <h2>Architecture Overview</h2>
-                <pre><code style="font-size: 0.4em;">┌─────────────────────────────────────────────────────┐
-│  MULTI-STAGE BUILD PIPELINE (5 stages)              │
-└─────────────────────────────────────────────────────┘
-
-Stage 1: Application Builder (node:20-alpine)
-├─ INPUT:  package.json, source code
-├─ OUTPUT: /app/dist (optimized assets)
-├─ SIZE:   450 MB (discarded)
-└─ TIME:   35s (cached) / 300s (cold)
-
-Stage 2: Nginx Builder (alpine:3.20)
-├─ INPUT:  nginx-1.26.2.tar.gz
-├─ OUTPUT: Static nginx binary (2.1 MB)
-├─ SIZE:   450 MB (discarded)
-└─ TIME:   180-240s
-
-Stage 3: Compressor (alpine:3.20)
-├─ INPUT:  Static assets
-├─ OUTPUT: Pre-compressed (.gz + .br)
-├─ SIZE:   150 MB (discarded)
-└─ TIME:   11s (parallel)
-
-Stage 4: Rootfs Prep (alpine:3.20)
-├─ INPUT:  Configs, assets
-├─ OUTPUT: Complete rootfs structure
-├─ SIZE:   50 MB (discarded)
-└─ TIME:   2-3s
-
-Stage 5: Final (FROM scratch)
-├─ INPUT:  Nginx (2.1MB), rootfs (3MB)
-├─ OUTPUT: Production image
-├─ SIZE:   5.38 MB ✓
-└─ TIME:   1s</code></pre>
-            </section>
-
-            <!-- Kỹ Thuật Tổng Hợp -->
-            <section>
-                <h2>Kỹ Thuật Tổng Hợp</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                    <div class="highlight-box">
-                        <h3>Build Optimization</h3>
-                        <ul>
-                            <li>✓ BuildKit cache mounts<br><small>93% faster rebuilds</small></li>
-                            <li>✓ Layer optimization<br><small>Efficient caching</small></li>
-                            <li>✓ Parallel compression<br><small>7x faster</small></li>
-                            <li>✓ Digest-pinned bases<br><small>Reproducible builds</small></li>
-                        </ul>
-                    </div>
-                    <div class="highlight-box">
-                        <h3>Size Optimization</h3>
-                        <ul>
-                            <li>✓ FROM scratch<br><small>Zero base size</small></li>
-                            <li>✓ Static linking<br><small>No dependencies</small></li>
-                            <li>✓ Minimal modules<br><small>76% smaller nginx</small></li>
-                            <li>✓ UPX compression<br><small>56% binary reduction</small></li>
-                            <li>✓ Artifact cleanup<br><small>12-15 MB saved</small></li>
-                            <li>✓ Pre-compression<br><small>75% network reduction</small></li>
-                        </ul>
-                    </div>
-                    <div class="highlight-box">
-                        <h3>Security Hardening</h3>
-                        <ul>
-                            <li>✓ FROM scratch<br><small>0 attack surface</small></li>
-                            <li>✓ Non-root user (65534)<br><small>Least privilege</small></li>
-                            <li>✓ Static binary<br><small>No lib vulnerabilities</small></li>
-                            <li>✓ SHA256 verification<br><small>Supply chain safety</small></li>
-                            <li>✓ No shell<br><small>No command injection</small></li>
-                        </ul>
-                    </div>
+                <div class="highlight-box">
+                    <p><strong>INPUT:</strong> Nginx binary (2.1MB), rootfs (3MB)</p>
+                    <p><strong>OUTPUT:</strong> Final production image</p>
+                    <p><strong>SIZE:</strong> 5.38 MB</p>
+                    <p><strong>TIME:</strong> 1s (chỉ COPY layers)</p>
+                    <p><strong>Kỹ thuật sử dụng:</strong></p>
+                    <ul>
+                        <li>FROM scratch (zero attack surface)</li>
+                        <li>OCI labels (standard metadata)</li>
+                        <li>Non-root USER (least privilege)</li>
+                        <li>Lightweight HEALTHCHECK (nginx -t)</li>
+                        <li>ENTRYPOINT+CMD pattern (flexible)</li>
+                    </ul>
+                    <p><strong>Security features:</strong></p>
+                    <ul>
+                        <li>No shell, no utilities</li>
+                        <li>Static binary (no dependencies)</li>
+                        <li>Non-root user (limited permissions)</li>
+                        <li>0 CVEs (nothing to exploit)</li>
+                    </ul>
                 </div>
             </section>
 
-            <!-- Metrics Summary -->
-            <section>
-                <h2>Metrics Summary</h2>
-                <pre><code>┌────────────────────────────────────────────────┐
-│ FINAL RESULTS                                  │
-├────────────────────────────────────────────────┤
-│ Image size:        5.38 MB                     │
-│ Base image:        scratch (0 MB)              │
-│ Layers:            2 data layers               │
-│ CVEs:              0 vulnerabilities           │
-│ Startup time:      3-5 seconds                 │
-│ Memory (idle):     10-12 MB                    │
-│ Shutdown time:     0.212 seconds               │
-│ HTTP response:     < 10ms                      │
-│                                                │
-│ Build time (cold): 7.5 minutes                 │
-│ Build time (warm): 45 seconds                  │
-│                                                │
-│ vs nginx:alpine:   92.5% smaller               │
-│ vs nginx:latest:   97.2% smaller               │
-└────────────────────────────────────────────────┘</code></pre>
+            <!-- END with Metrics -->
+            <section class="center">
+                <h1>THANK YOU!</h1>
+                <div style="margin-top: 40px;">
+                    <p style="font-size: 1.3em;">
+                        📦 Dockerfile Contest Submission<br>
+                        🎯 5.38 MB Production-Ready Image<br>
+                        🔒 Zero CVEs, Maximum Performance
+                    </p>
+                </div>
             </section>
 
-            <!-- END -->
-            <section class="center">
-                <h1>END</h1>
-                <p style="font-size: 1.5em; margin-top: 50px;">
-                    📦 Dockerfile Contest Submission<br>
-                    🎯 5.38 MB Production-Ready Image<br>
-                    🔒 Zero CVEs, Maximum Performance
-                </p>
-                <p style="margin-top: 40px;">
+            <!-- Final Metrics Summary -->
+            <section>
+                <h2 style="text-align: center; color: #42affa;">Final Results</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th colspan="2">METRICS SUMMARY</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Image size</strong></td>
+                            <td><span class="metric-value">5.38 MB</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Base image</strong></td>
+                            <td>scratch (0 MB)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Layers</strong></td>
+                            <td>2 data layers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CVEs</strong></td>
+                            <td><span class="metric-value">0 vulnerabilities</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Startup time</strong></td>
+                            <td><span class="good">3-5 seconds</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Memory (idle)</strong></td>
+                            <td><span class="good">10-12 MB</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Shutdown time</strong></td>
+                            <td><span class="good">0.212 seconds</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>HTTP response</strong></td>
+                            <td><span class="good">&lt; 10ms</span></td>
+                        </tr>
+                        <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
+                            <td><strong>Build time (cold)</strong></td>
+                            <td>7.5 minutes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Build time (warm)</strong></td>
+                            <td><span class="good">45 seconds</span></td>
+                        </tr>
+                        <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
+                            <td><strong>vs nginx:alpine</strong></td>
+                            <td><span class="metric-value">92.5% smaller</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>vs nginx:latest</strong></td>
+                            <td><span class="metric-value">97.2% smaller</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="text-align: center; margin-top: 40px; font-size: 1.2em;">
                     <strong>Cảm ơn đã lắng nghe!</strong>
                 </p>
             </section>
