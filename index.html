@@ -332,34 +332,31 @@
             <li class="subsection"><a href="#" data-slide="22">Pre-compression</a></li>
             <li class="subsection"><a href="#" data-slide="23">Parallel Compression</a></li>
             <li class="subsection"><a href="#" data-slide="24">Performance</a></li>
-            <li class="subsection"><a href="#" data-slide="25">Gzip vs Brotli</a></li>
+            <li class="subsection"><a href="#" data-slide="25">Max Compression</a></li>
             <li class="subsection"><a href="#" data-slide="26">Results</a></li>
-            <li class="subsection"><a href="#" data-slide="27">Quality Tuning</a></li>
-            <li class="subsection"><a href="#" data-slide="28">Trade-offs</a></li>
             
             <li class="section-header">Stage 4: Rootfs</li>
-            <li><a href="#" data-slide="29">Overview</a></li>
-            <li class="subsection"><a href="#" data-slide="30">Rootfs Pattern</a></li>
-            <li class="subsection"><a href="#" data-slide="31">User Database</a></li>
-            <li class="subsection"><a href="#" data-slide="32">/etc/passwd</a></li>
-            <li class="subsection"><a href="#" data-slide="33">Temp Directories</a></li>
-            <li class="subsection"><a href="#" data-slide="34">Ownership</a></li>
-            <li class="subsection"><a href="#" data-slide="35">Permissions</a></li>
+            <li><a href="#" data-slide="27">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="28">Rootfs Pattern</a></li>
+            <li class="subsection"><a href="#" data-slide="29">User Database</a></li>
+            <li class="subsection"><a href="#" data-slide="30">/etc/passwd</a></li>
+            <li class="subsection"><a href="#" data-slide="31">Temp Directories</a></li>
+            <li class="subsection"><a href="#" data-slide="32">Ownership</a></li>
+            <li class="subsection"><a href="#" data-slide="33">Permissions</a></li>
             
             <li class="section-header">Stage 5: Final</li>
-            <li><a href="#" data-slide="36">Overview</a></li>
-            <li class="subsection"><a href="#" data-slide="37">FROM scratch</a></li>
-            <li class="subsection"><a href="#" data-slide="38">Requirements</a></li>
-            <li class="subsection"><a href="#" data-slide="39">Security Benefits</a></li>
-            <li class="subsection"><a href="#" data-slide="40">OCI Labels</a></li>
-            <li class="subsection"><a href="#" data-slide="41">Non-root USER</a></li>
-            <li class="subsection"><a href="#" data-slide="42">Comparison</a></li>
-            <li class="subsection"><a href="#" data-slide="43">HEALTHCHECK</a></li>
-            <li class="subsection"><a href="#" data-slide="44">Health Command</a></li>
-            <li class="subsection"><a href="#" data-slide="45">Use Cases</a></li>
+            <li><a href="#" data-slide="34">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="35">FROM scratch</a></li>
+            <li class="subsection"><a href="#" data-slide="36">Requirements</a></li>
+            <li class="subsection"><a href="#" data-slide="37">Security Benefits</a></li>
+            <li class="subsection"><a href="#" data-slide="38">OCI Labels</a></li>
+            <li class="subsection"><a href="#" data-slide="39">Non-root USER</a></li>
+            <li class="subsection"><a href="#" data-slide="40">Comparison</a></li>
+            <li class="subsection"><a href="#" data-slide="41">HEALTHCHECK</a></li>
+            <li class="subsection"><a href="#" data-slide="42">Health Command</a></li>
             
             <li class="section-header">Kết Thúc</li>
-            <li><a href="#" data-slide="48">Final Metrics</a></li>
+            <li><a href="#" data-slide="43">Final Metrics</a></li>
         </ul>
     </nav>
 
@@ -542,8 +539,7 @@
             <section>
                 <h2>2.1 Stage 1: Application Builder</h2>
                 <p><strong>Mục đích:</strong> Build ứng dụng Vite React thành static assets</p>
-                <pre><code class="language-dockerfile">
-FROM node:${NODE_VERSION}-alpine@sha256:... AS builder
+                <pre><code class="language-dockerfile">FROM node:${NODE_VERSION}-alpine@sha256:... AS builder
 
 WORKDIR /app
 
@@ -1088,26 +1084,33 @@ Actual time:
 └─ Parallel:   11s  (7.1x faster)</code></pre>
             </section>
 
-            <!-- Gzip vs Brotli -->
+            <!-- REPLACED: Gzip vs Brotli + Compression Quality Tuning → Max Compression Strategy -->
             <section>
-                <h3>Kỹ thuật 3: Gzip vs Brotli</h3>
-                <p><strong>Tại sao cả hai?</strong></p>
-                <pre><code>Browser support:
-├─ Gzip:   ~98% (IE6+, all browsers)
-└─ Brotli: ~95% (modern browsers only)
+                <h3>Kỹ thuật 3: Max Compression Strategy</h3>
+                <pre><code class="language-bash">gzip -9 -k 
+brotli -q 11
+</code></pre>
+                
+                <p><strong>Chiến lược:</strong></p>
+                <ul>
+                    <li><strong>Gzip level -9</strong>: Maximum compression (70-75% reduction)</li>
+                    <li><strong>Brotli quality 11</strong>: Maximum compression (75-85% reduction)</li>
+                    <li><strong>Cả hai format</strong>: Nginx auto-select dựa trên browser support</li>
+                </ul>
 
-Compression ratio:
-├─ Gzip -9:    65-70% reduction
-└─ Brotli -q11: 75-85% reduction
-
-Nginx behavior:
-├─ If Accept-Encoding: br  → serve .br
-├─ If Accept-Encoding: gzip → serve .gz
-└─ Else → serve original</code></pre>
-                <p><strong>Chiến lược:</strong> Generate cả hai, nginx auto-select</p>
+                <div class="highlight-box" style="margin-top: 20px;">
+                    <p><strong>Đánh giá:</strong></p>
+                    <ul>
+                        <li class="good">✓ Best compression ratio (Brotli thường tốt hơn Gzip 5-10%)</li>
+                        <li class="good">✓ Backward compatibility (Gzip cho browsers cũ)</li>
+                        <li class="good">✓ Build time acceptable (2-3s cho Brotli-11 vs 0.5s cho level thấp hơn)</li>
+                        <li class="good">✓ Zero runtime CPU overhead (pre-compressed)</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Kết luận:</strong> Build-time có thể chậm → chọn max quality để tối ưu runtime</p>
+                </div>
             </section>
 
-            <!-- Compression results -->
+            <!-- Compression results - RENUMBERED -->
             <section>
                 <h3>Compression results thực tế</h3>
                 <pre><code>File: index.html
@@ -1124,53 +1127,10 @@ File: styles.css (Tailwind CSS)
 ├─ Original:  42,156 bytes
 ├─ Gzip -9:     8,923 bytes  (79% smaller)
 └─ Brotli-11:   7,834 bytes  (81% smaller)</code></pre>
-                <p><strong>Trung bình:</strong> Brotli tốt hơn Gzip 5-10%</p>
+                <p><strong>Trung bình:</strong> Brotli tốt hơn Gzip 5-10%, cả hai đều giảm ~75% network transfer</p>
             </section>
 
-            <!-- Compression Quality Tuning -->
-            <section>
-                <h3>Kỹ thuật 4: Compression Quality Tuning</h3>
-                <pre><code class="language-bash"># Gzip: level -9 (max compression)
-gzip -9 -k -f file.js
-
-# Brotli: quality 11 (max compression)
-brotli -q 11 -f file.js</code></pre>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.8em;">
-                    <div>
-                        <p><strong>Gzip levels (1-9):</strong></p>
-                        <ul>
-                            <li>Level 1: Fast, ~60% compression</li>
-                            <li>Level 6: Default, ~65% compression</li>
-                            <li>Level 9: Best, ~70% compression</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <p><strong>Brotli qualities (0-11):</strong></p>
-                        <ul>
-                            <li>Quality 0: Fast, ~50% compression</li>
-                            <li>Quality 4: Default, ~70% compression</li>
-                            <li>Quality 11: Best, ~80% compression</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Trade-off: Compression time -->
-            <section>
-                <h3>Trade-off: Compression time vs Ratio</h3>
-                <pre><code>Gzip:
-Level 1: 0.05s, 245KB → 98KB  (60%)
-Level 6: 0.12s, 245KB → 85KB  (65%)
-Level 9: 0.48s, 245KB → 68KB  (72%)
-
-Brotli:
-Quality 1:  0.08s, 245KB → 95KB  (61%)
-Quality 4:  0.25s, 245KB → 75KB  (69%)
-Quality 11: 2.34s, 245KB → 61KB  (75%)</code></pre>
-                <p><strong>Kết luận:</strong> Build time có thể chậm → chọn best quality</p>
-            </section>
-
-            <!-- Stage 4 -->
+            <!-- Stage 4 - RENUMBERED from slide 29 to 27 -->
             <section>
                 <h2>2.4 Stage 4: Minimal Filesystem Preparation</h2>
                 <p><strong>Mục đích:</strong> Chuẩn bị filesystem tối thiểu cho FROM scratch</p>
@@ -1447,19 +1407,22 @@ FROM scratch    → 0 bytes, không có OS</code></pre>
 
             <!-- Requirements for FROM scratch -->
             <section>
-                <h3>Yêu cầu để dùng FROM scratch</h3>
-                <pre><code>✓ Static binary (no dynamic libs)
-✓ Complete rootfs (dirs, configs)
-✓ No shell scripts in ENTRYPOINT
-✓ No debugging tools needed</code></pre>
-                <p><strong>Our case:</strong></p>
-                <ul>
-                    <li>✓ Nginx statically linked</li>
-                    <li>✓ Rootfs prepared in Stage 4</li>
-                    <li>✓ Binary execution: /usr/sbin/nginx</li>
-                    <li>✓ Production-only (no debugging)</li>
-                </ul>
-            </section>
+    <h3>Yêu cầu để dùng FROM scratch</h3>
+    <ul>
+        <li><strong>Static binary</strong> - Không phụ thuộc thư viện động</li>
+        <li><strong>Minimal rootfs</strong> - Chỉ thêm thư mục/file thực sự cần</li>
+        <li><strong>Direct execution</strong> - ENTRYPOINT gọi binary trực tiếp</li>
+        <li><strong>No runtime tools</strong> - Không shell, không debugging tools</li>
+    </ul>
+    
+    <p><strong>Our case:</strong></p>
+    <ul>
+        <li><span class="good">✓ </span>Nginx statically linked</li>
+        <li><span class="good">✓ </span>Rootfs prepared in Stage 4</li>
+        <li><span class="good">✓ </span>Binary execution: /usr/sbin/nginx</li>
+        <li><span class="good">✓ </span>Production-only (no debugging)</li>
+    </ul>
+</section>
 
             <!-- FROM scratch benefits -->
             <section>
