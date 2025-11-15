@@ -289,6 +289,52 @@
 			color: #42affa;
 			font-weight: 600;
 		}
+		
+		/* Terminal styles for embedded history */
+        .terminal-embed {
+            background: #000000;
+            color: #e6e6e6;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.65em;
+            line-height: 1.4;
+            overflow: auto;
+            max-height: 800px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.6);
+        }
+        
+        .terminal-embed .row {
+            display: flex;
+            gap: 1ch;
+            margin-bottom: 2px;
+        }
+        
+        .terminal-embed .left {
+            white-space: pre;
+        }
+        
+        .terminal-embed .right {
+            margin-left: auto;
+            white-space: pre;
+            color: #9aa0a6;
+        }
+        
+        .terminal-embed .prompt {
+            color: #00ff7f;
+        }
+        
+        .terminal-embed .t-green {
+            color: #00ff7f;
+        }
+        
+        .terminal-embed .t-blue {
+            color: #4da3ff;
+        }
+        
+        .terminal-embed .t-yellow {
+            color: #ffd166;
+        }
     </style>
 </head>
 <body>
@@ -355,6 +401,7 @@
             
             <li class="section-header">Kết Thúc</li>
             <li><a href="#" data-slide="40">Final Metrics</a></li>
+            <li><a href="#" data-slide="41">Build History</a></li>
         </ul>
     </nav>
 
@@ -1584,6 +1631,14 @@ Nobody: → Không thể ghi vào /usr/sbin, thiệt hại bị giới hạn
                 </table>
             </section>
 
+            <!-- NEW: Build History Terminal Log -->
+            <section>
+                <h2 style="text-align: center; color: #42affa;">BUILD HISTORY LOG</h2>
+                <p style="text-align: center; margin-bottom: 20px;">Real build output - Cold build (64s) vs Warm build (0.2s)</p>
+                
+                <div class="terminal-embed" id="term-history"></div>
+            </section>
+
         </div>
     </div>
 
@@ -1670,6 +1725,116 @@ Nobody: → Không thể ghi vào /usr/sbin, thiệt hại bị giới hạn
                 overlay.classList.remove('active');
             }
         });
+        
+        // Terminal history rendering
+        const terminalLog = `top-1-react-dockerfile-contest-2025@dataonline-cloud-vps:~/vite-react-template$ DOCKER_BUILDKIT=1 docker build -t dockerfile:v1 -f Dockerfile .
+[+] Building 64.1s (37/37) FINISHED                                                                                                                                  docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                           0.0s
+ => [internal] load metadata for docker.io/library/alpine:3.20@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e01958                                         2.7s
+ => [internal] load metadata for docker.io/library/node:20-alpine@sha256:2d5e8a8a51bc341fd5f2eed6d91455c3a3d147e91a14298fc564b5dc519c1666                                      2.7s
+ => [builder  1/11] FROM docker.io/library/node:20-alpine@sha256:2d5e8a8a51bc341fd5f2eed6d91455c3a3d147e91a14298fc564b5dc519c1666                                              7.4s
+ => [compressor 1/5] FROM docker.io/library/alpine:3.20@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e01958                                                3.3s
+ => [nginx-builder 3/7] RUN apk add --no-cache gcc g++ musl-dev make linux-headers curl pcre-dev pcre2-dev zlib-dev zlib-static openssl-dev openssl-libs-static upx          14.6s
+ => [nginx-builder 5/7] RUN curl -fSL "https://nginx.org/download/nginx-1.26.2.tar.gz" -o nginx.tar.gz && echo "627fe086209bba80a2853a0add9d958d7ebbdffa1a8467a5784c9a6b4f..."  2.5s
+ => [nginx-builder 6/7] RUN tar -xzf nginx.tar.gz && cd "nginx-1.26.2" && ./configure --prefix=/usr/local/nginx ...                                                          29.8s
+ => [builder  5/11] RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline                                                         14.5s
+ => [builder 11/11] RUN pnpm build && find dist -type f \\( -name "*.map" -o -name ".*" \\) -delete && rm -f dist/stats.html                                                  33.8s
+ => [nginx-builder 7/7] RUN strip --strip-all /usr/local/nginx/sbin/nginx && upx --best --lzma /usr/local/nginx/sbin/nginx && /usr/local/nginx/sbin/nginx -V                  6.3s
+ => [compressor 5/5] RUN find dist -type f \\( -name "*.html" -o -name "*.css" -o -name "*.js" ... \\) -print0 | xargs -0 -P"$(nproc)" -I {} sh -c 'gzip -9 -k -f "{}" ...'   1.2s
+ => exporting to image                                                                                                                                                         0.1s
+ => => writing image sha256:3b1ebd77f47cd883520addab9b8393f1e61025b5f0a1e5cb0347514187e8226c                                                                                   0.0s
+ => => naming to docker.io/library/dockerfile:v1                                                                                                                               0.0s
+
+top-1-react-dockerfile-contest-2025@dataonline-cloud-vps:~/vite-react-template$ DOCKER_BUILDKIT=1 docker build -t dockerfile:v2 -f Dockerfile .
+[+] Building 0.2s (37/37) FINISHED                                                                                                                                   docker:default
+ => CACHED [builder  1/11] FROM docker.io/library/node:20-alpine@sha256:2d5e8a8a51bc341fd5f2eed6d91455c3a3d147e91a14298fc564b5dc519c1666                                      0.0s
+ => CACHED [compressor 1/5] FROM docker.io/library/alpine:3.20@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e01958                                        0.0s
+ => CACHED [nginx-builder 3/7] RUN apk add --no-cache gcc g++ musl-dev make linux-headers curl pcre-dev pcre2-dev zlib-dev zlib-static openssl-dev openssl-libs-static upx    0.0s
+ => CACHED [nginx-builder 6/7] RUN tar -xzf nginx.tar.gz && cd "nginx-1.26.2" && ./configure ...                                                                              0.0s
+ => CACHED [nginx-builder 7/7] RUN strip --strip-all /usr/local/nginx/sbin/nginx && upx --best --lzma /usr/local/nginx/sbin/nginx ...                                         0.0s
+ => CACHED [builder  5/11] RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline                                                   0.0s
+ => CACHED [builder 11/11] RUN pnpm build && find dist -type f \\( -name "*.map" -o -name ".*" \\) -delete && rm -f dist/stats.html                                            0.0s
+ => CACHED [compressor 5/5] RUN find dist -type f ... -print0 | xargs -0 -P"$(nproc)" -I {} sh -c 'gzip -9 -k -f "{}" && brotli -q 11 -f "{}"'                                 0.0s
+ => exporting to image                                                                                                                                                         0.0s
+ => => naming to docker.io/library/dockerfile:v2                                                                                                                               0.0s
+
+top-1-react-dockerfile-contest-2025@dataonline-cloud-vps:~/vite-react-template$ docker images
+REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+dockerfile   v1        3b1ebd77f47c   49 seconds ago   2.43MB
+dockerfile   v2        3b1ebd77f47c   49 seconds ago   2.43MB
+
+top-1-react-dockerfile-contest-2025@dataonline-cloud-vps:~/vite-react-template$ trivy image --severity HIGH,CRITICAL dockerfile:v1
+2025-11-11T12:56:48+07:00       INFO    [vuln] Vulnerability scanning is enabled
+2025-11-11T12:56:48+07:00       INFO    Number of language-specific files       num=0
+2025-11-11T12:56:48+07:00       INFO    [report] No issues detected with scanner(s).    scanners=[secret]
+
+Report Summary
+┌────────┬──────┬─────────────────┬─────────┐
+│ Target │ Type │ Vulnerabilities │ Secrets │
+├────────┼──────┼─────────────────┼─────────┤
+│   -    │  -   │        -        │    -    │
+└────────┴──────┴─────────────────┴─────────┘
+
+top-1-react-dockerfile-contest-2025@dataonline-cloud-vps:~/vite-react-template$ docker run -it --rm --entrypoint /bin/sh dockerfile:v1
+docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: "/bin/sh": stat /bin/sh: no such file or directory: unknown.`;
+        
+        const termHistory = document.getElementById('term-history');
+        if (termHistory) {
+            const timeRe = /(.*?)(\s{1,})(\d+\.?\d*s)\s*$/;
+            
+            terminalLog.split('\n').forEach(line => {
+                const row = document.createElement('div');
+                row.className = 'row';
+                
+                const m = line.match(timeRe);
+                const hasDocker = line.includes('docker:default');
+                
+                if (m || hasDocker) {
+                    const left = document.createElement('span');
+                    left.className = 'left';
+                    
+                    const right = document.createElement('span');
+                    right.className = 'right';
+                    
+                    if (m) {
+                        left.textContent = m[1];
+                        right.textContent = m[3];
+                    } else {
+                        const parts = line.split('docker:default');
+                        left.textContent = parts[0];
+                        right.textContent = 'docker:default' + (parts[1] || '');
+                    }
+                    
+                    row.appendChild(left);
+                    row.appendChild(right);
+                } else {
+                    const left = document.createElement('span');
+                    left.className = 'left';
+                    left.textContent = line;
+                    row.appendChild(left);
+                }
+                
+                termHistory.appendChild(row);
+            });
+            
+            // Highlight prompts
+            [...termHistory.querySelectorAll('.row')].forEach(r => {
+                const s = r.firstChild;
+                if (!s) return;
+                const t = s.textContent;
+                const i = t.indexOf('$ ');
+                if (i > -1) {
+                    const before = document.createElement('span');
+                    before.className = 'left prompt';
+                    before.textContent = t.slice(0, i+2);
+                    const after = document.createElement('span');
+                    after.className = 'left';
+                    after.textContent = t.slice(i+2);
+                    r.replaceChild(after, s);
+                    r.insertBefore(before, after);
+                }
+            });
+        }
     </script>
 </body>
 </html>
