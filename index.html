@@ -290,50 +290,88 @@
 			font-weight: 600;
 		}
 		
-		/* Terminal styles for embedded history */
+		/* Terminal styles - macOS style window */
         .terminal-embed {
-            background: #000000;
-            color: #e6e6e6;
+            background: #1e1e1e;
             border-radius: 10px;
-            padding: 20px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.65em;
-            line-height: 1.4;
-            overflow: auto;
-            max-height: 800px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.6);
+            box-shadow: 0 20px 60px rgba(0,0,0,.8);
+            overflow: hidden;
+            max-width: 95%;
+            margin: 0 auto;
         }
         
-        .terminal-embed .row {
+        .terminal-header {
+            background: linear-gradient(to bottom, #3c3c3c 0%, #2d2d2d 100%);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #000;
+        }
+        
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 0.5px solid rgba(0,0,0,0.3);
+        }
+        
+        .terminal-button.close {
+            background: linear-gradient(135deg, #ff5f57 0%, #ff5f57 100%);
+        }
+        
+        .terminal-button.minimize {
+            background: linear-gradient(135deg, #ffbd2e 0%, #ffbd2e 100%);
+        }
+        
+        .terminal-button.maximize {
+            background: linear-gradient(135deg, #28ca42 0%, #28ca42 100%);
+        }
+        
+        .terminal-title {
+            color: #b4b4b4;
+            font-size: 13px;
+            font-weight: 500;
+            flex: 1;
+            text-align: center;
+            margin-right: 52px; /* Balance buttons width */
+        }
+        
+        .terminal-body {
+            background: #1e1e1e;
+            color: #e6e6e6;
+            padding: 16px 18px;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', ui-monospace, SFMono-Regular, Consolas, monospace;
+            font-size: 17px;
+            line-height: 1.5;
+            overflow: auto;
+            max-height: 750px;
+        }
+        
+        .terminal-body .row {
             display: flex;
             gap: 1ch;
             margin-bottom: 2px;
         }
         
-        .terminal-embed .left {
+        .terminal-body .left {
             white-space: pre;
         }
         
-        .terminal-embed .right {
+        .terminal-body .right {
             margin-left: auto;
             white-space: pre;
             color: #9aa0a6;
         }
         
-        .terminal-embed .prompt {
+        .terminal-body .prompt {
             color: #00ff7f;
-        }
-        
-        .terminal-embed .t-green {
-            color: #00ff7f;
-        }
-        
-        .terminal-embed .t-blue {
-            color: #4da3ff;
-        }
-        
-        .terminal-embed .t-yellow {
-            color: #ffd166;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -1569,74 +1607,23 @@ Nobody: → Không thể ghi vào /usr/sbin, thiệt hại bị giới hạn
             </section>
 
             <!-- END with Metrics -->
-            <!-- Final Metrics Summary -->
-            <section>
-                <h2 style="text-align: center; color: #42affa;">FINAL RESULT</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th colspan="2">METRICS SUMMARY</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Image size</strong></td>
-                            <td><span class="metric-value">2.43 MB</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Base image</strong></td>
-                            <td>scratch (0 MB)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Layers</strong></td>
-                            <td>2 data layers</td>
-                        </tr>
-                        <tr>
-                            <td><strong>CVEs</strong></td>
-                            <td><span class="metric-value">0 vulnerabilities</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Startup time</strong></td>
-                            <td><span class="good">3-5 seconds</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Memory (idle)</strong></td>
-                            <td><span class="good">10-12 MB</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Shutdown time</strong></td>
-                            <td><span class="good">0.212 seconds</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>HTTP response</strong></td>
-                            <td><span class="good">&lt; 0.01s</span></td>
-                        </tr>
-                        <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
-                            <td><strong>Build time (cold)</strong></td>
-                            <td>64 seconds</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Build time (warm)</strong></td>
-                            <td><span class="good">0.2 seconds</span></td>
-                        </tr>
-                        <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
-                            <td><strong>vs nginx:alpine (7.5 MB)</strong></td>
-                            <td><span class="metric-value">67.6% smaller</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>vs nginx:latest (192 MB)</strong></td>
-                            <td><span class="metric-value">98.7% smaller</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
 
             <!-- NEW: Build History Terminal Log -->
             <section>
                 <h2 style="text-align: center; color: #42affa;">BUILD HISTORY LOG</h2>
                 <p style="text-align: center; margin-bottom: 20px;">Real build output - Cold build (64s) vs Warm build (0.2s)</p>
                 
-                <div class="terminal-embed" id="term-history"></div>
+                <div class="terminal-embed">
+                    <div class="terminal-header">
+                        <div class="terminal-buttons">
+                            <div class="terminal-button close"></div>
+                            <div class="terminal-button minimize"></div>
+                            <div class="terminal-button maximize"></div>
+                        </div>
+                        <div class="terminal-title">top-1-react-dockerfile-contest-2025@dataonline-cloud-vps: ~/vite-react-template</div>
+                    </div>
+                    <div class="terminal-body" id="term-history"></div>
+                </div>
             </section>
 
         </div>
