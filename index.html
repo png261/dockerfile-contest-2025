@@ -55,7 +55,7 @@
 			display: block;
 		}
 		.reveal pre code {
-			max-height: 500px;
+			max-height: 700px;
 			overflow: auto;
 		}
 
@@ -142,7 +142,7 @@
 		#sidebar h3 {
 			color: #42affa;
 			margin: 0 0 20px 0;
-			font-size: 1.1em; /* increased from 0.9em */
+			font-size: 1em; /* increased from 0.9em */
 			text-transform: uppercase;
 			letter-spacing: 2px;
 			font-weight: 600;
@@ -196,13 +196,7 @@
 		#sidebar ul li.subsection a {
 			padding-left: 28px;
 			font-size: 0.82em; /* increased from 0.7em */
-			color: rgba(255, 255, 255, 0.6);
-		}
-		
-		#sidebar ul li.subsection a:before {
-			content: '→ ';
-			margin-right: 4px;
-			opacity: 0.5;
+			color: rgba(255, 255, 255, 0.8);
 		}
 		
 		/* Minimal Toggle Button */
@@ -310,10 +304,9 @@
     <nav id="sidebar">
         <h3>Dockerfile Contest 2025</h3>
         <ul>
-            <li class="section-header">Tổng Quan</li>
             <li><a href="#" data-slide="2">Architecture Overview</a></li>
-            <li><a href="#" data-slide="3">Kỹ Thuật Tổng Hợp</a></li>
-            <li><a href="#" data-slide="4">Metrics Summary</a></li>
+            <li><a href="#" data-slide="3">Kỹ Thuật</a></li>
+            <li><a href="#" data-slide="4">Đánh giá</a></li>
             
             <li class="section-header">Stage 1: Builder</li>
             <li><a href="#" data-slide="6">Overview</a></li>
@@ -363,8 +356,7 @@
             <li class="subsection"><a href="#" data-slide="42">Comparison</a></li>
             <li class="subsection"><a href="#" data-slide="43">HEALTHCHECK</a></li>
             <li class="subsection"><a href="#" data-slide="44">Health Command</a></li>
-            <li class="subsection"><a href="#" data-slide="45">ENTRYPOINT vs CMD</a></li>
-            <li class="subsection"><a href="#" data-slide="46">Use Cases</a></li>
+            <li class="subsection"><a href="#" data-slide="45">Use Cases</a></li>
             
             <li class="section-header">Kết Thúc</li>
             <li><a href="#" data-slide="48">Final Metrics</a></li>
@@ -385,11 +377,6 @@
                         <strong>Email:</strong> <a href="mailto:nhphuong.code@gmail.com" style="color: #60d0ff;">nhphuong.code@gmail.com</a>
                     </p>
                 </div>
-            </section>
-
-            <!-- Overview Section -->
-            <section class="center">
-                <h1>TỔNG QUAN</h1>
             </section>
 
             <!-- Architecture Overview -->
@@ -449,10 +436,10 @@
 
             <!-- Kỹ Thuật Tổng Hợp -->
             <section>
-                <h2>Kỹ Thuật Tổng Hợp</h2>
+                <h2>Kỹ Thuật</h2>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                     <div class="highlight-box">
-                        <h3>Build Optimization</h3>
+                        <h3>Tối ưu Build </h3>
                         <ul>
                             <li>BuildKit cache mounts<br><small>93% faster rebuilds</small></li>
                             <li>Layer optimization<br><small>Efficient caching</small></li>
@@ -461,7 +448,7 @@
                         </ul>
                     </div>
                     <div class="highlight-box">
-                        <h3>Size Optimization</h3>
+                        <h3>Tối ưu kích thước</h3>
                         <ul>
                             <li>FROM scratch<br><small>Zero base size</small></li>
                             <li>Static linking<br><small>No dependencies</small></li>
@@ -472,7 +459,7 @@
                         </ul>
                     </div>
                     <div class="highlight-box">
-                        <h3>Security Hardening</h3>
+                        <h3>Bảo mật</h3>
                         <ul>
                             <li> FROM scratch<br><small>0 attack surface</small></li>
                             <li> Non-root user (65534)<br><small>Least privilege</small></li>
@@ -486,7 +473,7 @@
 
             <!-- Metrics Summary -->
             <section>
-                <h2>Metrics Summary</h2>
+                <h2>Đánh giá</h2>
                 <table>
                     <thead>
                         <tr>
@@ -1405,22 +1392,42 @@ USER 65534:65534</code></pre>
             <section>
                 <h2>2.5 Stage 5: Final Image (FROM SCRATCH)</h2>
                 <p><strong>Mục đích:</strong> Tạo minimal production image với zero attack surface</p>
-                <pre><code class="language-dockerfile">FROM scratch
+                <pre><code class="language-dockerfile">
+FROM scratch
 
-# Metadata
-LABEL org.opencontainers.image.title="Vite React" \
-      org.opencontainers.image.base.name="scratch"
+# Re-declare build args for metadata
+ARG BUILD_DATE
+ARG GIT_COMMIT=unknown
 
-# Copy nginx binary + rootfs
-COPY --from=nginx-builder /usr/local/nginx/sbin/nginx \
-     /usr/sbin/nginx
+# OCI metadata labels
+LABEL org.opencontainers.image.title="Vite React - Distroless" \
+      org.opencontainers.image.description="Distroless minimal image (<6MB) - UPX compressed" \
+      org.opencontainers.image.version="2.2.0-distroless-upx" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.base.name="scratch" \
+      org.opencontainers.image.source="https://github.com/riipandi/vite-react-template" \
+      org.opencontainers.image.licenses="MIT OR Apache-2.0" \
+      maintainer="contest-2025-optimized"
+
+# Copy static nginx binary and minimal filesystem
+COPY --from=nginx-builder /usr/local/nginx/sbin/nginx /usr/sbin/nginx
 COPY --from=rootfs /rootfs /
 
+# Run as non-root user (nobody = 65534)
 USER 65534:65534
+
 EXPOSE 3000
-HEALTHCHECK CMD ["/usr/sbin/nginx", "-t", "-q"]
+
+# Lightweight healthcheck using nginx config test
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["/usr/sbin/nginx", "-t", "-q"]
+
+STOPSIGNAL SIGTERM
+
 ENTRYPOINT ["/usr/sbin/nginx"]
-CMD ["-g", "daemon off;"]</code></pre>
+CMD ["-g", "daemon off;"]
+</code></pre>
             </section>
 
             <!-- FROM scratch explanation -->
@@ -1469,32 +1476,27 @@ FROM scratch    → 0 bytes, không có OS</code></pre>
                         <tr>
                             <td><strong>Shell</strong></td>
                             <td>/bin/sh</td>
-                            <td><span class="good">None ✓</span></td>
+                            <td><span class="good">✓ None</span></td>
                         </tr>
                         <tr>
                             <td><strong>Utils</strong></td>
                             <td>~50 bins</td>
-                            <td><span class="good">None ✓</span></td>
+                            <td><span class="good">✓ None</span></td>
                         </tr>
                         <tr>
                             <td><strong>Package</strong></td>
                             <td>apk</td>
-                            <td><span class="good">None ✓</span></td>
+                            <td><span class="good">✓ None</span></td>
                         </tr>
                         <tr>
                             <td><strong>Libraries</strong></td>
                             <td>~100</td>
-                            <td><span class="good">None ✓</span></td>
+                            <td><span class="good">✓ None</span></td>
                         </tr>
                         <tr>
                             <td><strong>CVEs</strong></td>
                             <td><span class="bad">18-57</span></td>
-                            <td><span class="metric-value">0 ✓</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Size</strong></td>
-                            <td>7.5 MB</td>
-                            <td><span class="metric-value">5.38MB ✓</span></td>
+                            <td><span class="good">✓ 0</span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -1551,12 +1553,14 @@ docker images --filter "label=org.opencontainers.image.title=Vite React"
 → UID 65534, chỉ write vào owned dirs</code></pre>
                     </div>
                 </div>
-                <p><strong>Exploit scenario:</strong></p>
-                <pre><code>1. Attacker finds nginx RCE vulnerability
-2. Execute shell command as USER
+                <p><strong>Kịch bản khai thác:</strong></p>
+                <pre>
+1. Kẻ tấn công tìm thấy lỗ hổng RCE (Remote Code Execution) trên nginx
+2. Thực thi lệnh shell với quyền USER
 
-Root:   → Can overwrite /usr/sbin/nginx, escalate
-Nobody: → Can't write to /usr/sbin, limited damage ✓</code></pre>
+Root:   → Có thể ghi đè /usr/sbin/nginx, leo thang đặc quyền
+Nobody: → Không thể ghi vào /usr/sbin, thiệt hại bị giới hạn
+                </pre>
             </section>
 
             <!-- HEALTHCHECK -->
@@ -1579,14 +1583,6 @@ Nobody: → Can't write to /usr/sbin, limited damage ✓</code></pre>
             <!-- Health check command -->
             <section>
                 <h3>Health check command</h3>
-                <pre><code class="language-bash">/usr/sbin/nginx -t -q
-
--t → Test configuration
--q → Quiet (chỉ return exit code)
-
-Exit 0 → Healthy
-Exit 1 → Unhealthy</code></pre>
-                <p><strong>Tại sao không dùng HTTP check?</strong></p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.85em;">
                     <div>
                         <p class="bad"><strong>❌ HTTP healthcheck (common)</strong></p>
@@ -1611,49 +1607,6 @@ Exit 1 → Unhealthy</code></pre>
                         <p><strong>Trade-off:</strong> Không test HTTP endpoint (assume config OK = service OK)</p>
                     </div>
                 </div>
-            </section>
-
-            <!-- ENTRYPOINT vs CMD -->
-            <section>
-                <h3>Kỹ thuật 5: ENTRYPOINT vs CMD</h3>
-                <pre><code class="language-dockerfile">ENTRYPOINT ["/usr/sbin/nginx"]
-CMD ["-g", "daemon off;"]</code></pre>
-                <p><strong>Giải thích sự khác biệt:</strong></p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.8em;">
-                    <div>
-                        <p><strong>Chỉ CMD:</strong></p>
-                        <pre><code class="language-dockerfile">CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
-docker run app:contest
-→ Chạy: /usr/sbin/nginx -g daemon off;
-docker run app:contest /bin/sh
-→ Chạy: /bin/sh (override CMD)</code></pre>
-                    </div>
-                    <div>
-                        <p><strong>ENTRYPOINT + CMD:</strong></p>
-                                               <pre><code class="language-dockerfile">ENTRYPOINT ["/usr/sbin/nginx"]
-CMD ["-g", "daemon off;"]
-docker run app:contest
-→ Chạy: /usr/sbin/nginx -g daemon off;
-docker run app:contest -t
-→ Chạy: /usr/sbin/nginx -t (append to ENTRYPOINT)</code></pre>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Use cases -->
-            <section>
-                <h3>Use cases</h3>
-                <pre><code class="language-bash"># Check config
-docker run --rm app:contest -t
-
-# Version
-docker run --rm app:contest -v
-
-# Custom config
-docker run --rm app:contest -c /custom/nginx.conf
-
-# All append to ENTRYPOINT</code></pre>
-                <p><strong>Best practice:</strong> ENTRYPOINT = executable, CMD = default args</p>
             </section>
 
             <!-- END with Metrics -->
