@@ -7,88 +7,371 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.0/dist/reveal.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.0/dist/theme/black.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.0/plugin/highlight/monokai.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
-        .reveal {
-            font-size: 36px;
-        }
-        .reveal h1 {
-            font-size: 2.5em;
-            text-transform: none;
-        }
-        .reveal h2 {
-            font-size: 1.8em;
-            text-transform: none;
-        }
-        .reveal h3 {
-            font-size: 1.4em;
-            text-transform: none;
-        }
-        .reveal pre {
-            font-size: 0.75em;
-            width: 100%;
-        }
-        .reveal code {
-            font-family: 'Courier New', monospace;
-            font-size: 1.1em;
-        }
-        .reveal .slides section {
-            text-align: left;
-        }
-        .reveal .slides section.center {
-            text-align: center;
-        }
-        .reveal ul, .reveal ol {
-            display: block;
-        }
-        .reveal pre code {
-            max-height: 500px;
-            overflow: auto;
-        }
+        /* Base styling */
+		body, .reveal {
+			font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+		}
 
-        /* Table Styling - BIGGER */
-        .reveal table {
-            font-size: 0.85em;
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 90%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .reveal table th {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 15px 20px;
-            border: 2px solid #42affa;
-            font-weight: bold;
-            text-align: left;
-        }
-        .reveal table td {
-            padding: 12px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .reveal table tbody tr:last-child td {
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        .reveal table tr:nth-child(even) {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .reveal table tr:hover {
-            background: rgba(66, 175, 250, 0.1);
-        }
+		.reveal {
+			font-size: 36px;
+			font-weight: 400;
+		}
 
-        .highlight-box {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-        .good { color: #4ade80; }
-        .bad { color: #f87171; }
-        .metric-value {
-            color: #42affa;
-            font-weight: bold;
-        }
+		.reveal h1 {
+			font-size: 2.5em;
+			text-transform: none;
+		}
+		.reveal h2 {
+			font-size: 1.8em;
+			text-transform: none;
+		}
+		.reveal h3 {
+			font-size: 1.4em;
+			text-transform: none;
+		}
+		.reveal pre {
+			font-size: 0.75em;
+			width: 100%;
+		}
+		.reveal code,
+		pre code,
+		pre {
+			font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+			font-size: 1.02em;
+			letter-spacing: 0.2px;
+		}
+		.reveal .slides section {
+			text-align: left;
+		}
+		.reveal .slides section.center {
+			text-align: center;
+		}
+		.reveal ul, .reveal ol {
+			display: block;
+		}
+		.reveal pre code {
+			max-height: 500px;
+			overflow: auto;
+		}
+
+		/* Table Styling - BIGGER */
+		.reveal table {
+			font-size: 0.85em;
+			margin: 20px auto;
+			border-collapse: collapse;
+			width: 90%;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+		}
+		.reveal table th {
+			background: rgba(255, 255, 255, 0.15);
+			padding: 15px 20px;
+			border: 2px solid #42affa;
+			font-weight: bold;
+			text-align: left;
+		}
+		.reveal table td {
+			padding: 12px 20px;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+		}
+		.reveal table tbody tr:last-child td {
+			border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+		}
+		.reveal table tr:nth-child(even) {
+			background: rgba(255, 255, 255, 0.05);
+		}
+		.reveal table tr:hover {
+			background: rgba(66, 175, 250, 0.1);
+		}
+
+		.highlight-box {
+			background: rgba(255, 255, 255, 0.1);
+			padding: 20px;
+			border-radius: 10px;
+			margin: 20px 0;
+		}
+		.good { color: #4ade80; }
+		.bad { color: #f87171; }
+		.metric-value {
+			color: #42affa;
+			font-weight: bold;
+		}
+		
+		/* Sidebar Navigation - Minimal Design */
+		#sidebar {
+			position: fixed;
+			top: 0;
+			font-weight: bold;
+			right: -500px; /* Increased to fully hide sidebar + shadow */
+			width: 400px;
+			height: 100vh;
+			border-left: 1px solid rgba(66, 175, 250, 0.3);
+			transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+			z-index: 1000;
+			overflow-y: auto;
+			padding: 30px 20px;
+			box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8);
+			backdrop-filter: blur(10px);
+		}
+		
+		#sidebar::-webkit-scrollbar {
+			width: 6px;
+		}
+		
+		#sidebar::-webkit-scrollbar-track {
+			background: rgba(255, 255, 255, 0.05);
+		}
+		
+		#sidebar::-webkit-scrollbar-thumb {
+			background: rgba(66, 175, 250, 0.3);
+			border-radius: 3px;
+		}
+		
+		#sidebar::-webkit-scrollbar-thumb:hover {
+			background: rgba(66, 175, 250, 0.5);
+		}
+		
+		#sidebar.active {
+			right: 0;
+		}
+		
+		#sidebar h3 {
+			color: #42affa;
+			margin: 0 0 20px 0;
+			font-size: 1.1em; /* increased from 0.9em */
+			text-transform: uppercase;
+			letter-spacing: 2px;
+			font-weight: 600;
+			border-bottom: 1px solid rgba(66, 175, 250, 0.3);
+			padding-bottom: 12px;
+		}
+		
+		#sidebar ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+		
+		#sidebar ul li {
+			margin: 0;
+		}
+		
+		#sidebar ul li a {
+			color: rgba(255, 255, 255, 0.8);
+			text-decoration: none;
+			display: block;
+			padding: 10px 12px;
+			border-radius: 6px;
+			transition: all 0.2s ease;
+			font-size: 0.9em; /* increased from 0.75em */
+			border-left: 2px solid transparent;
+		}
+		
+		#sidebar ul li a:hover {
+			background: rgba(66, 175, 250, 0.1);
+			color: #42affa;
+			transform: translateX(-3px);
+		}
+		
+		#sidebar ul li.section-header {
+			font-weight: 700;
+			color: #42affa;
+			margin-top: 20px;
+			margin-bottom: 8px;
+			font-size: 0.85em; /* increased from 0.7em */
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			padding-left: 12px;
+			opacity: 0.9;
+		}
+		
+		#sidebar ul li.section-header:first-child {
+			margin-top: 0;
+		}
+		
+		#sidebar ul li.subsection a {
+			padding-left: 28px;
+			font-size: 0.82em; /* increased from 0.7em */
+			color: rgba(255, 255, 255, 0.6);
+		}
+		
+		#sidebar ul li.subsection a:before {
+			content: '→ ';
+			margin-right: 4px;
+			opacity: 0.5;
+		}
+		
+		/* Minimal Toggle Button */
+		#toggle-sidebar {
+			position: fixed;
+			top: 15px;
+			right: 15px;
+			width: 40px;
+			height: 40px;
+			background: inherit;
+			border: 0;
+			border-radius: 6px;
+			cursor: pointer;
+			z-index: 1001;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.3s ease;
+			backdrop-filter: blur(5px);
+		}
+		
+		#toggle-sidebar span {
+			display: block;
+			width: 18px;
+			height: 2px;
+			background: #42affa;
+			position: relative;
+			transition: all 0.3s ease;
+		}
+		
+		#toggle-sidebar span::before,
+		#toggle-sidebar span::after {
+			content: '';
+			position: absolute;
+			width: 18px;
+			height: 2px;
+			background: #42affa;
+			transition: all 0.3s ease;
+		}
+		
+		#toggle-sidebar span::before {
+			top: -6px;
+			left: 0px;
+		}
+		
+		#toggle-sidebar span::after {
+			top: 6px;
+			left: 0px;
+		}
+		
+		#toggle-sidebar.active {
+			background: transparent;
+		}
+		
+		#toggle-sidebar.active span {
+			background: transparent;
+		}
+		
+		#toggle-sidebar.active span::before {
+			transform: rotate(45deg);
+			top: 0;
+		}
+		
+		#toggle-sidebar.active span::after {
+			transform: rotate(-45deg);
+			top: 0;
+		}
+		
+		/* Overlay */
+		#sidebar-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.6);
+			z-index: 999;
+			display: none;
+			backdrop-filter: blur(2px);
+			transition: opacity 0.3s ease;
+		}
+		
+		#sidebar-overlay.active {
+			display: block;
+		}
+		
+		/* Active slide indicator */
+		#sidebar ul li a.active-slide {
+			background: rgba(66, 175, 250, 0.2);
+			color: #42affa;
+			font-weight: 600;
+		}
     </style>
 </head>
 <body>
+    <!-- Minimal Toggle Button -->
+    <button id="toggle-sidebar" aria-label="Toggle Navigation">
+        <span></span>
+    </button>
+    
+    <!-- Overlay -->
+    <div id="sidebar-overlay"></div>
+    
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar">
+        <h3>Dockerfile Contest 2025</h3>
+        <ul>
+            <li class="section-header">Tổng Quan</li>
+            <li><a href="#" data-slide="2">Architecture Overview</a></li>
+            <li><a href="#" data-slide="3">Kỹ Thuật Tổng Hợp</a></li>
+            <li><a href="#" data-slide="4">Metrics Summary</a></li>
+            
+            <li class="section-header">Stage 1: Builder</li>
+            <li><a href="#" data-slide="6">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="7">Corepack</a></li>
+            <li class="subsection"><a href="#" data-slide="8">BuildKit Cache</a></li>
+            <li class="subsection"><a href="#" data-slide="9">Performance</a></li>
+            <li class="subsection"><a href="#" data-slide="10">Layer Optimization</a></li>
+            <li class="subsection"><a href="#" data-slide="11">Cleanup Artifacts</a></li>
+            
+            <li class="section-header">Stage 2: Nginx</li>
+            <li><a href="#" data-slide="12">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="13">Digest-pinned</a></li>
+            <li class="subsection"><a href="#" data-slide="14">SHA256 Verification</a></li>
+            <li class="subsection"><a href="#" data-slide="15">Minimal Modules</a></li>
+            <li class="subsection"><a href="#" data-slide="16">Modules Disabled</a></li>
+            <li class="subsection"><a href="#" data-slide="17">Static Linking</a></li>
+            <li class="subsection"><a href="#" data-slide="18">Dynamic vs Static</a></li>
+            <li class="subsection"><a href="#" data-slide="19">UPX Compression</a></li>
+            <li class="subsection"><a href="#" data-slide="20">UPX Trade-offs</a></li>
+            
+            <li class="section-header">Stage 3: Compression</li>
+            <li><a href="#" data-slide="21">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="22">Pre-compression</a></li>
+            <li class="subsection"><a href="#" data-slide="23">Parallel Compression</a></li>
+            <li class="subsection"><a href="#" data-slide="24">Performance</a></li>
+            <li class="subsection"><a href="#" data-slide="25">Gzip vs Brotli</a></li>
+            <li class="subsection"><a href="#" data-slide="26">Results</a></li>
+            <li class="subsection"><a href="#" data-slide="27">Quality Tuning</a></li>
+            <li class="subsection"><a href="#" data-slide="28">Trade-offs</a></li>
+            
+            <li class="section-header">Stage 4: Rootfs</li>
+            <li><a href="#" data-slide="29">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="30">Rootfs Pattern</a></li>
+            <li class="subsection"><a href="#" data-slide="31">User Database</a></li>
+            <li class="subsection"><a href="#" data-slide="32">/etc/passwd</a></li>
+            <li class="subsection"><a href="#" data-slide="33">Temp Directories</a></li>
+            <li class="subsection"><a href="#" data-slide="34">Ownership</a></li>
+            <li class="subsection"><a href="#" data-slide="35">Permissions</a></li>
+            
+            <li class="section-header">Stage 5: Final</li>
+            <li><a href="#" data-slide="36">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="37">FROM scratch</a></li>
+            <li class="subsection"><a href="#" data-slide="38">Requirements</a></li>
+            <li class="subsection"><a href="#" data-slide="39">Security Benefits</a></li>
+            <li class="subsection"><a href="#" data-slide="40">OCI Labels</a></li>
+            <li class="subsection"><a href="#" data-slide="41">Non-root USER</a></li>
+            <li class="subsection"><a href="#" data-slide="42">Comparison</a></li>
+            <li class="subsection"><a href="#" data-slide="43">HEALTHCHECK</a></li>
+            <li class="subsection"><a href="#" data-slide="44">Health Command</a></li>
+            <li class="subsection"><a href="#" data-slide="45">ENTRYPOINT vs CMD</a></li>
+            <li class="subsection"><a href="#" data-slide="46">Use Cases</a></li>
+            
+            <li class="section-header">Kết Thúc</li>
+            <li><a href="#" data-slide="47">Thank You</a></li>
+            <li><a href="#" data-slide="48">Final Metrics</a></li>
+        </ul>
+    </nav>
+
     <div class="reveal">
         <div class="slides">
 
@@ -273,14 +556,34 @@
             <section>
                 <h2>2.1 Stage 1: Application Builder</h2>
                 <p><strong>Mục đích:</strong> Build ứng dụng Vite React thành static assets</p>
-                <pre><code class="language-dockerfile">FROM node:20-alpine@sha256:2d5e8a8... AS builder
+                <pre><code class="language-dockerfile">
+FROM node:${NODE_VERSION}-alpine@sha256:2d5e8a8a51bc341fd5f2eed6d91455c3a3d147e91a14298fc564b5dc519c1666 AS builder
 
 WORKDIR /app
 
-# Setup pnpm với corepack
-ENV PNPM_HOME="/pnpm" PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && \
-    corepack prepare pnpm@9.12.2 --activate</code></pre>
+# Setup pnpm with corepack
+ENV PNPM_HOME="/pnpm" \
+    PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@9.12.2 --activate
+
+# Install dependencies with cache mount
+COPY package.json pnpm-lock.yaml .npmrc ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --prefer-offline
+
+# Copy source and build configuration
+COPY tsconfig.json tsconfig.node.json vite.config.ts ./
+COPY postcss.config.js tailwind.config.ts biome.json ./
+COPY index.html ./
+COPY public ./public
+COPY src ./src
+
+# Build and clean artifacts
+ENV NODE_ENV=production
+RUN pnpm build && \
+    find dist -type f \( -name "*.map" -o -name ".*" \) -delete && \
+    rm -f dist/stats.html
+</code></pre>
             </section>
 
             <!-- Corepack -->
@@ -335,7 +638,7 @@ Build lần 2 (warm cache):
 ├─ Download packages: 0s    (cache hit)
 ├─ Install:          20s
 └─ Total:            20s    (93% faster)</code></pre>
-                <p><strong>Trade-off:</strong> Cache mount không persist trong image (không tăng size)</p>
+                <p>Cache mount không persist trong image (không tăng size)</p>
             </section>
 
             <!-- Layer Optimization -->
@@ -391,16 +694,103 @@ RUN pnpm build && \
             <section>
                 <h2>2.2 Stage 2: Nginx Static Binary Builder</h2>
                 <p><strong>Mục đích:</strong> Compile nginx thành static binary với minimal modules</p>
-                <pre><code class="language-dockerfile">FROM alpine:3.20@sha256:765942a4... AS nginx-builder
+                <pre><code class="language-dockerfile">
+FROM alpine:${ALPINE_VERSION}@sha256:765942a4039992336de8dd5db680586e1a206607dd06170ff0a37267a9e01958 AS nginx-builder
 
-ARG NGINX_VERSION=1.26.2
-ENV NGINX_SHA256=627fe086209bba80a...
+ARG NGINX_VERSION
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ENV NGINX_SHA256=627fe086209bba80a2853a0add9d958d7ebbdffa1a8467a5784c9a6b4f03d738
+
+# Log build platform info for multi-arch
+RUN echo "Building on $BUILDPLATFORM for $TARGETPLATFORM"
 
 # Install build dependencies
 RUN apk add --no-cache \
     gcc g++ musl-dev make linux-headers curl \
     pcre-dev pcre2-dev zlib-dev zlib-static \
-    openssl-dev openssl-libs-static upx</code></pre>
+    openssl-dev openssl-libs-static upx
+
+# Download and verify nginx
+WORKDIR /tmp
+RUN curl -fSL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" -o nginx.tar.gz && \
+    echo "${NGINX_SHA256}  nginx.tar.gz" | sha256sum -c -
+
+# Build fully static nginx with minimal modules
+RUN tar -xzf nginx.tar.gz && \
+    cd "nginx-${NGINX_VERSION}" && \
+    ./configure \
+        --prefix=/usr/local/nginx \
+        --sbin-path=/usr/local/nginx/sbin/nginx \
+        --conf-path=/etc/nginx/nginx.conf \
+        --pid-path=/run/nginx.pid \
+        --lock-path=/run/nginx.lock \
+        --error-log-path=/dev/stderr \
+        --http-log-path=/dev/stdout \
+        --user=nobody \
+        --group=nobody \
+        # Performance features
+        --with-threads \
+        --with-file-aio \
+        --with-http_ssl_module \
+        --with-http_v2_module \
+        --with-http_gzip_static_module \
+        --with-http_stub_status_module \
+        --with-pcre \
+        --with-pcre-jit \
+        # Static linking and optimization
+        --with-cc-opt='-static -Os -ffunction-sections -fdata-sections' \
+        --with-ld-opt='-static -Wl,--gc-sections' \
+        # Disable unnecessary modules
+        --without-http_charset_module \
+        --without-http_ssi_module \
+        --without-http_userid_module \
+        --without-http_auth_basic_module \
+        --without-http_mirror_module \
+        --without-http_autoindex_module \
+        --without-http_geo_module \
+        --without-http_map_module \
+        --without-http_split_clients_module \
+        --without-http_referer_module \
+        --without-http_rewrite_module \
+        --without-http_proxy_module \
+        --without-http_fastcgi_module \
+        --without-http_uwsgi_module \
+        --without-http_scgi_module \
+        --without-http_grpc_module \
+        --without-http_memcached_module \
+        --without-http_limit_conn_module \
+        --without-http_limit_req_module \
+        --without-http_empty_gif_module \
+        --without-http_browser_module \
+        --without-http_upstream_hash_module \
+        --without-http_upstream_ip_hash_module \
+        --without-http_upstream_least_conn_module \
+        --without-http_upstream_random_module \
+        --without-http_upstream_keepalive_module \
+        --without-http_upstream_zone_module \
+        --without-mail_pop3_module \
+        --without-mail_imap_module \
+        --without-mail_smtp_module \
+        --without-stream_limit_conn_module \
+        --without-stream_access_module \
+        --without-stream_geo_module \
+        --without-stream_map_module \
+        --without-stream_split_clients_module \
+        --without-stream_return_module \
+        --without-stream_set_module \
+        --without-stream_upstream_hash_module \
+        --without-stream_upstream_least_conn_module \
+        --without-stream_upstream_random_module \
+        --without-stream_upstream_zone_module && \
+    make -j"$(nproc)" && \
+    make install
+
+# Optimize binary: strip symbols + UPX compression
+RUN strip --strip-all /usr/local/nginx/sbin/nginx && \
+    upx --best --lzma /usr/local/nginx/sbin/nginx && \
+    /usr/local/nginx/sbin/nginx -V
+</code></pre>
             </section>
 
             <!-- Digest-pinned -->
@@ -446,9 +836,96 @@ RUN curl -fSL \
                 </ul>
             </section>
 
+            <!-- Minimal Modules -->
+            <section>
+                <h3>Kỹ thuật 3: Minimal Modules</h3>
+                <pre><code class="language-dockerfile">
+./configure \
+    ...
+    # Performance features
+    --with-threads \
+    --with-file-aio \
+    --with-http_ssl_module \
+    --with-http_v2_module \
+    --with-http_gzip_static_module \
+    --with-http_stub_status_module \
+    --with-pcre \
+    --with-pcre-jit \
+    # Disable unnecessary modules
+    --without-http_charset_module \
+    --without-http_ssi_module \
+    --without-http_userid_module \
+    --without-http_auth_basic_module \
+    --without-http_mirror_module \
+    --without-http_autoindex_module \
+    --without-http_geo_module \
+    --without-http_map_module \
+    --without-http_split_clients_module \
+    --without-http_referer_module \
+    --without-http_rewrite_module \
+    --without-http_proxy_module \
+    --without-http_fastcgi_module \
+    --without-http_uwsgi_module \
+    --without-http_scgi_module \
+    --without-http_grpc_module \
+    --without-http_memcached_module \
+    --without-http_limit_conn_module \
+    --without-http_limit_req_module \
+    --without-http_empty_gif_module \
+    --without-http_browser_module \
+    --without-http_upstream_hash_module \
+    --without-http_upstream_ip_hash_module \
+    --without-http_upstream_least_conn_module \
+    --without-http_upstream_random_module \
+    --without-http_upstream_keepalive_module \
+    --without-http_upstream_zone_module \
+    --without-mail_pop3_module \
+    --without-mail_imap_module \
+    --without-mail_smtp_module \
+    --without-stream_limit_conn_module \
+    --without-stream_access_module \
+    --without-stream_geo_module \
+    --without-stream_map_module \
+    --without-stream_split_clients_module \
+    --without-stream_return_module \
+    --without-stream_set_module \
+    --without-stream_upstream_hash_module \
+    --without-stream_upstream_least_conn_module \
+    --without-stream_upstream_random_module \
+    --without-stream_upstream_zone_module && \
+make -j"$(nproc)" && \
+make install
+</code></pre>
+            </section>
+
+            <!-- Modules được disable -->
+            <section>
+                <h3>Modules được disable</h3>
+                <div style="font-size: 0.85em;">
+                    <p><strong>Proxy/Backend modules</strong> (không cần cho static site):</p>
+                    <ul>
+                        <li><code>http_proxy_module</code>: Reverse proxy</li>
+                        <li><code>http_fastcgi_module</code>: FastCGI</li>
+                        <li><code>http_uwsgi_module</code>: uWSGI</li>
+                        <li><code>http_grpc_module</code>: gRPC</li>
+                    </ul>
+                    <p><strong>Authentication modules</strong> (không cần):</p>
+                    <ul>
+                        <li><code>http_auth_basic_module</code>: Basic auth</li>
+                        <li><code>http_auth_request_module</code>: Auth subrequest</li>
+                    </ul>
+                    <p><strong>Advanced routing</strong> (không cần):</p>
+                    <ul>
+                        <li><code>http_rewrite_module</code>: URL rewriting</li>
+                        <li><code>http_geo_module</code>: Geo-based routing</li>
+                    </ul>
+                </div>
+                <p><strong>Kết quả:</strong> nginx binary từ 22 MB → 5.2 MB (76% smaller)</p>
+            </section>
+
             <!-- Static Linking Details -->
             <section>
-                <h3>Kỹ thuật 3: Static Linking</h3>
+                <h3>Kỹ thuật 4: Static Linking</h3>
                 <pre><code class="language-dockerfile">./configure \
   --with-cc-opt='-static -Os -ffunction-sections -fdata-sections' \
   --with-ld-opt='-static -Wl,--gc-sections'</code></pre>
@@ -494,50 +971,6 @@ Dependencies:       0 files ✓</code></pre>
                     <li class="bad">✗ Larger binary size</li>
                     <li class="bad">✗ Can't share libs between apps</li>
                 </ul>
-            </section>
-
-            <!-- Minimal Modules -->
-            <section>
-                <h3>Kỹ thuật 4: Minimal Modules</h3>
-                <pre><code class="language-dockerfile">./configure \
-  # Enable only needed modules
-  --with-http_ssl_module \
-  --with-http_v2_module \
-  --with-http_gzip_static_module \
-
-  # Disable 30+ unnecessary modules
-  --without-http_auth_basic_module \
-  --without-http_proxy_module \
-  --without-http_fastcgi_module \
-  --without-http_uwsgi_module \
-  --without-http_scgi_module \
-  --without-http_grpc_module \
-  # ... và 24+ modules khác</code></pre>
-            </section>
-
-            <!-- Modules được disable -->
-            <section>
-                <h3>Modules được disable</h3>
-                <div style="font-size: 0.85em;">
-                    <p><strong>Proxy/Backend modules</strong> (không cần cho static site):</p>
-                    <ul>
-                        <li><code>http_proxy_module</code>: Reverse proxy</li>
-                        <li><code>http_fastcgi_module</code>: FastCGI</li>
-                        <li><code>http_uwsgi_module</code>: uWSGI</li>
-                        <li><code>http_grpc_module</code>: gRPC</li>
-                    </ul>
-                    <p><strong>Authentication modules</strong> (không cần):</p>
-                    <ul>
-                        <li><code>http_auth_basic_module</code>: Basic auth</li>
-                        <li><code>http_auth_request_module</code>: Auth subrequest</li>
-                    </ul>
-                    <p><strong>Advanced routing</strong> (không cần):</p>
-                    <ul>
-                        <li><code>http_rewrite_module</code>: URL rewriting</li>
-                        <li><code>http_geo_module</code>: Geo-based routing</li>
-                    </ul>
-                </div>
-                <p><strong>Kết quả:</strong> nginx binary từ 22 MB → 5.2 MB (76% smaller)</p>
             </section>
 
             <!-- UPX Details -->
@@ -1280,6 +1713,69 @@ docker run --rm app:contest -c /custom/nginx.conf
             highlight: {
                 highlightOnLoad: true,
                 escapeHTML: false
+            }
+        });
+        
+        // Sidebar Toggle
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        toggleBtn.addEventListener('click', () => {
+            toggleBtn.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+        
+        overlay.addEventListener('click', () => {
+            toggleBtn.classList.remove('active');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        
+        // Navigation with active slide tracking
+        const sidebarLinks = document.querySelectorAll('#sidebar a');
+        
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const slideIndex = parseInt(link.getAttribute('data-slide'));
+                Reveal.slide(slideIndex);
+                
+                // Update active link
+                sidebarLinks.forEach(l => l.classList.remove('active-slide'));
+                link.classList.add('active-slide');
+                
+                // Close sidebar
+                toggleBtn.classList.remove('active');
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        });
+        
+        // Track slide changes and update active link
+        Reveal.on('slidechanged', event => {
+            const currentSlide = event.indexh;
+            sidebarLinks.forEach(link => {
+                if (parseInt(link.getAttribute('data-slide')) === currentSlide) {
+                    link.classList.add('active-slide');
+                } else {
+                    link.classList.remove('active-slide');
+                }
+            });
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Press 'm' to toggle sidebar
+            if (e.key === 'm' || e.key === 'M') {
+                toggleBtn.click();
+            }
+            // Press 'Escape' to close sidebar
+            if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                toggleBtn.classList.remove('active');
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
             }
         });
     </script>
