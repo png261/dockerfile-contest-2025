@@ -339,24 +339,22 @@
             <li><a href="#" data-slide="26">Overview</a></li>
             <li class="subsection"><a href="#" data-slide="27">Rootfs Pattern</a></li>
             <li class="subsection"><a href="#" data-slide="28">User Database</a></li>
-            <li class="subsection"><a href="#" data-slide="29">/etc/passwd</a></li>
-            <li class="subsection"><a href="#" data-slide="30">Temp Directories</a></li>
-            <li class="subsection"><a href="#" data-slide="31">Ownership</a></li>
-            <li class="subsection"><a href="#" data-slide="32">Permissions</a></li>
+            <li class="subsection"><a href="#" data-slide="29">Ownership</a></li>
+            <li class="subsection"><a href="#" data-slide="30">Permissions</a></li>
             
             <li class="section-header">Stage 5: Final</li>
-            <li><a href="#" data-slide="33">Overview</a></li>
-            <li class="subsection"><a href="#" data-slide="34">FROM scratch</a></li>
-            <li class="subsection"><a href="#" data-slide="35">Requirements</a></li>
-            <li class="subsection"><a href="#" data-slide="36">Security Benefits</a></li>
-            <li class="subsection"><a href="#" data-slide="37">OCI Labels</a></li>
-            <li class="subsection"><a href="#" data-slide="38">Non-root USER</a></li>
-            <li class="subsection"><a href="#" data-slide="39">Comparison</a></li>
-            <li class="subsection"><a href="#" data-slide="40">HEALTHCHECK</a></li>
-            <li class="subsection"><a href="#" data-slide="41">Health Command</a></li>
+            <li><a href="#" data-slide="31">Overview</a></li>
+            <li class="subsection"><a href="#" data-slide="32">FROM scratch</a></li>
+            <li class="subsection"><a href="#" data-slide="33">Requirements</a></li>
+            <li class="subsection"><a href="#" data-slide="34">Security Benefits</a></li>
+            <li class="subsection"><a href="#" data-slide="35">OCI Labels</a></li>
+            <li class="subsection"><a href="#" data-slide="36">Non-root USER</a></li>
+            <li class="subsection"><a href="#" data-slide="37">Comparison</a></li>
+            <li class="subsection"><a href="#" data-slide="38">HEALTHCHECK</a></li>
+            <li class="subsection"><a href="#" data-slide="39">Health Command</a></li>
             
             <li class="section-header">Kết Thúc</li>
-            <li><a href="#" data-slide="42">Final Metrics</a></li>
+            <li><a href="#" data-slide="40">Final Metrics</a></li>
         </ul>
     </nav>
 
@@ -517,14 +515,6 @@
                         <tr>
                             <td><strong>Build time (warm)</strong></td>
                             <td><span class="good">45 seconds</span></td>
-                        </tr>
-                        <tr style="border-top: 2px solid rgba(255,255,255,0.3);">
-                            <td><strong>vs nginx:alpine</strong></td>
-                            <td><span class="metric-value">92.5% smaller</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>vs nginx:latest</strong></td>
-                            <td><span class="metric-value">97.2% smaller</span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -985,7 +975,7 @@ RUN /usr/local/nginx/sbin/nginx -V</code></pre>
                         </tr>
                         <tr>
                             <td><span class="good">✓</span> Faster deployment</td>
-                            <td><span class="bad">✗</span> Anti-virus flags</td>
+                            <td></td>
                         </tr>
                     </tbody>
                 </table>
@@ -1043,11 +1033,29 @@ gzip_static on;</code></pre>
                         <p><strong>Ưu điểm:</strong></p>
                         <ul>
                             <li>Zero runtime CPU</li>
-                            <li>Best compression ratio (slow algorithm OK)</li>
-                            <li>Consistent performance</li>
+                            <li>Best compression ratio gzip -9, brotli -q 11 <br/> (slow algorithm OK)</li>
                         </ul>
                     </div>
                 </div>
+            </section>
+
+            <section>
+                <h3>Compression results thực tế</h3>
+                <pre><code>File: index.html
+├─ Original:  14,523 bytes
+├─ Gzip -9:    3,891 bytes  (73% smaller)
+└─ Brotli-11:  3,247 bytes  (78% smaller)
+
+File: main.js (React + ReactDOM)
+├─ Original:  245,832 bytes
+├─ Gzip -9:    68,234 bytes  (72% smaller)
+└─ Brotli-11:  61,445 bytes  (75% smaller)
+
+File: styles.css (Tailwind CSS)
+├─ Original:  42,156 bytes
+├─ Gzip -9:     8,923 bytes  (79% smaller)
+└─ Brotli-11:   7,834 bytes  (81% smaller)</code></pre>
+                <p><strong>Trung bình:</strong> Brotli tốt hơn Gzip 5-10%, cả hai đều giảm ~75% network transfer</p>
             </section>
 
             <!-- Parallel Compression -->
@@ -1084,51 +1092,8 @@ Actual time:
 └─ Parallel:   11s  (7.1x faster)</code></pre>
             </section>
 
-            <!-- REPLACED: Gzip vs Brotli + Compression Quality Tuning → Max Compression Strategy -->
-            <section>
-                <h3>Kỹ thuật 3: Max Compression Strategy</h3>
-                <pre><code class="language-bash">gzip -9 -k 
-brotli -q 11
-</code></pre>
-                
-                <p><strong>Chiến lược:</strong></p>
-                <ul>
-                    <li><strong>Gzip level -9</strong>: Maximum compression (70-75% reduction)</li>
-                    <li><strong>Brotli quality 11</strong>: Maximum compression (75-85% reduction)</li>
-                    <li><strong>Cả hai format</strong>: Nginx auto-select dựa trên browser support</li>
-                </ul>
-
-                <div class="highlight-box" style="margin-top: 20px;">
-                    <p><strong>Đánh giá:</strong></p>
-                    <ul>
-                        <li class="good">✓ Best compression ratio (Brotli thường tốt hơn Gzip 5-10%)</li>
-                        <li class="good">✓ Backward compatibility (Gzip cho browsers cũ)</li>
-                        <li class="good">✓ Build time acceptable (2-3s cho Brotli-11 vs 0.5s cho level thấp hơn)</li>
-                        <li class="good">✓ Zero runtime CPU overhead (pre-compressed)</li>
-                    </ul>
-                    <p style="margin-top: 15px;"><strong>Kết luận:</strong> Build-time có thể chậm → chọn max quality để tối ưu runtime</p>
-                </div>
-            </section>
-
             <!-- Compression results - RENUMBERED -->
-            <section>
-                <h3>Compression results thực tế</h3>
-                <pre><code>File: index.html
-├─ Original:  14,523 bytes
-├─ Gzip -9:    3,891 bytes  (73% smaller)
-└─ Brotli-11:  3,247 bytes  (78% smaller)
-
-File: main.js (React + ReactDOM)
-├─ Original:  245,832 bytes
-├─ Gzip -9:    68,234 bytes  (72% smaller)
-└─ Brotli-11:  61,445 bytes  (75% smaller)
-
-File: styles.css (Tailwind CSS)
-├─ Original:  42,156 bytes
-├─ Gzip -9:     8,923 bytes  (79% smaller)
-└─ Brotli-11:   7,834 bytes  (81% smaller)</code></pre>
-                <p><strong>Trung bình:</strong> Brotli tốt hơn Gzip 5-10%, cả hai đều giảm ~75% network transfer</p>
-            </section>
+            
 
             <!-- Stage 4 - RENUMBERED from slide 29 to 27 -->
             <section>
@@ -1202,26 +1167,36 @@ RUN chown -R 65534:65534 \
 </code></pre>
             </section>
 
-            <!-- Rootfs Pattern -->
+            <!-- MERGED: Rootfs Pattern + Nginx Temp Directories -->
             <section>
-                <h3>Kỹ thuật 1: Rootfs Pattern</h3>
+                <h3>Kỹ thuật 1: Rootfs Pattern & Directory Structure</h3>
                 <p><strong>Vấn đề:</strong> FROM scratch không có filesystem</p>
-                <p><strong>Giải pháp:</strong> Chuẩn bị rootfs trong Alpine, copy sang scratch</p>
-                <pre><code class="language-dockerfile"># Build rootfs in Alpine
-RUN mkdir -p /rootfs/etc /rootfs/var ...
+                <p><strong>Giải pháp:</strong> Chuẩn bị rootfs trong Alpine với đầy đủ cấu trúc thư mục</p>
+                
+                <pre><code class="language-dockerfile"># Build rootfs in Alpine với tất cả directories nginx cần
+RUN mkdir -p \
+    /rootfs/etc/nginx/conf.d \
+    /rootfs/usr/share/nginx/html \
+    /rootfs/var/log/nginx \
+    /rootfs/var/cache/nginx \
+    /rootfs/usr/local/nginx/{client_body,proxy,fastcgi,uwsgi,scgi}_temp \
+    /rootfs/tmp \
+    /rootfs/run
 
 # Copy to final scratch image
 FROM scratch
 COPY --from=rootfs /rootfs /</code></pre>
+
                 <p><strong>Giải thích:</strong></p>
                 <ul>
                     <li><code>/rootfs</code> trong Alpine là "staging area"</li>
-                    <li>COPY chuyển toàn bộ cấu trúc sang scratch</li>
-                    <li>Scratch image không cần Alpine runtime</li>
+                    <li>Tạo đầy đủ nginx temp dirs (client_body, proxy, fastcgi, uwsgi, scgi)</li>
+                    <li>Dù disable modules, nginx vẫn expect các dirs này tồn tại</li>
+                    <li>COPY chuyển toàn bộ cấu trúc sang scratch (không cần Alpine runtime)</li>
                 </ul>
             </section>
 
-            <!-- Minimal User Database -->
+            <!-- Minimal User Database - RENUMBERED to slide 28 -->
             <section>
                 <h3>Kỹ thuật 2: Minimal User Database</h3>
                 <pre><code class="language-dockerfile"># Create nobody user (UID 65534)
@@ -1238,41 +1213,9 @@ nobody:x:65534:65534:nobody:/:/sbin/nologin
 • /sbin/nologin → no shell (security)</code></pre>
             </section>
 
-            <!-- Why /etc/passwd -->
+            <!-- Ownership Setup - RENUMBERED to slide 29 -->
             <section>
-                <h3>Tại sao cần /etc/passwd trong FROM scratch?</h3>
-                <pre><code class="language-dockerfile"># Final image
-USER 65534:65534  # Nginx cần lookup UID → username</code></pre>
-                <p><strong>Nginx code:</strong></p>
-                <pre><code class="language-c">struct passwd *pwd = getpwuid(65534);
-// Reads /etc/passwd to find "nobody"</code></pre>
-                <p><strong>Không có /etc/passwd</strong> → Nginx warning (nhưng vẫn chạy)</p>
-            </section>
-
-            <!-- Nginx Temp Directories -->
-            <section>
-                <h3>Kỹ thuật 3: Nginx Temp Directories</h3>
-                <pre><code class="language-dockerfile">RUN mkdir -p \
-    /rootfs/usr/local/nginx/client_body_temp \
-    /rootfs/usr/local/nginx/proxy_temp \
-    /rootfs/usr/local/nginx/fastcgi_temp \
-    /rootfs/usr/local/nginx/uwsgi_temp \
-    /rootfs/usr/local/nginx/scgi_temp</code></pre>
-                <p><strong>Tại sao cần?</strong></p>
-                <p>Nginx cần temp dirs cho:</p>
-                <ul>
-                    <li><code>client_body_temp</code>: Large POST body buffering</li>
-                    <li><code>proxy_temp</code>: Proxy response buffering</li>
-                    <li><code>fastcgi_temp</code>: FastCGI buffering</li>
-                    <li><code>uwsgi_temp</code>: uWSGI buffering</li>
-                    <li><code>scgi_temp</code>: SCGI buffering</li>
-                </ul>
-                <p><strong>Lưu ý:</strong> Dù disable modules, nginx vẫn expect dirs tồn tại</p>
-            </section>
-
-            <!-- Ownership Setup -->
-            <section>
-                <h3>Kỹ thuật 4: Ownership Setup</h3>
+                <h3>Kỹ thuật 3: Ownership Setup</h3>
                 <pre><code class="language-dockerfile">RUN chown -R 65534:65534 \
     /rootfs/usr/share/nginx/html \
     /rootfs/var/log/nginx \
@@ -1293,7 +1236,7 @@ USER 65534:65534</code></pre>
                 </ul>
             </section>
 
-            <!-- Permission matrix -->
+            <!-- Permission matrix - RENUMBERED to slide 30 -->
             <section>
                 <h3>Permission Matrix</h3>
                 <table>
@@ -1347,7 +1290,7 @@ USER 65534:65534</code></pre>
                 <p><strong>Sticky bit (1777)</strong> on <code>/tmp</code>: Chỉ owner có thể delete files</p>
             </section>
 
-            <!-- Stage 5 -->
+            <!-- Stage 5 - RENUMBERED to slide 31 -->
             <section>
                 <h2>2.5 Stage 5: Final Image (FROM SCRATCH)</h2>
                 <p><strong>Mục đích:</strong> Tạo minimal production image với zero attack surface</p>
@@ -1565,7 +1508,6 @@ Nobody: → Không thể ghi vào /usr/sbin, thiệt hại bị giới hạn
                             <li>Tests config validity</li>
                             <li>Works in FROM scratch</li>
                         </ul>
-                        <p><strong>Trade-off:</strong> Không test HTTP endpoint (assume config OK = service OK)</p>
                     </div>
                 </div>
             </section>
